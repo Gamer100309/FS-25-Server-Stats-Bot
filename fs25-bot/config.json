@@ -1,0 +1,27 @@
+{
+  "bot_token": "YOUR_BOT_TOKEN_HERE",
+  "prefix": "!",
+  "server": {
+    "stats_url": "http://IP_ADRESS:22011/feed/dedicated-server-stats.xml?code=c4689f3935c8cf60bec2eda5f5254d2a",
+    "career_savegame_url": "http://IP_ADRESS:22011/feed/dedicated-server-savegame.html?code=c4689f3935c8cf60bec2eda5f5254d2a&file=careerSavegame",
+    "enable_mod_list": true,
+    "mod_list_url": "http://IP_ADRESS:22011/mods.html",
+    "enable_server_password": true,
+    "server_password": "1234",
+    "server_name_string_to_remove": "4Netplayers"
+  },
+  "channels": {
+    "serverinfo_channel_id": "12345678901234567890",
+    "player_status_channel_id": "12345678901234567890"
+  },
+  "intervals": {
+    "serverinfo_update_minutes": 1
+  },
+  "messages": {
+      "player_joined_title": "Player Joined",
+      "player_joined_description": "**{player_name}**{admin_note} has joined {server_name}!",
+      "player_left_title": "Player Left",
+      "player_left_description": "**{player_name}**{admin_note} has left {server_name}. Total playtime: **{total_playtime}**"
+  },
+  "debug": false
+}
