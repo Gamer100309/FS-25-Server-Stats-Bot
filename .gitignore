@@ -1,0 +1,24 @@
+# Node modules
+node_modules/
+
+# Configuration files (contain token)
+global-config.json
+
+# Generated files
+configs/
+states/
+Icons/
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment
+.env

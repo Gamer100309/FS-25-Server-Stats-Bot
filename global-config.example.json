@@ -1,0 +1,36 @@
+{
+  "token": "YOUR_BOT_TOKEN_HERE",
+  "verboseLogging": false,
+  "defaults": {
+    "updateInterval": 10000,
+    "embedColors": {
+      "online": "#00FF00",
+      "offline": "#FF0000"
+    },
+    "defaultEmojis": {
+	  "online": "🟢",
+	  "offline": "🔴",
+	  "map": "🗺️",
+	  "version": "⚙️",
+	  "password": "🔒",
+	  "players": "👥",
+	  "mods": "🔧",
+	  "vehicles": "🚜",
+	  "money": "💰",
+	  "difficulty": "⚡",
+	  "timeScale": "⏱️",
+	  "playerList": "👤"
+	},
+    "defaultButtonMessages": {
+      "playersMessage": "👥 **Online Players ({count}/{max}):**\n```\n{players}\n```"
+    },
+    "setupPermissions": {
+      "allowAdministrator": true,
+      "allowedRoles": []
+    },
+    "textSettings": {
+      "defaultLanguage": "en",
+      "allowCustomTexts": true
+    }
+  }
+}

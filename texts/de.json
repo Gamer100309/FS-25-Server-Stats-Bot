@@ -1,0 +1,642 @@
+{
+  "_meta": {
+    "language": "de",
+    "languageName": "Deutsch",
+    "version": "1.0",
+    "author": "System",
+    "description": "Deutsche Texte für den Farming Simulator Status Bot"
+  },
+  "setup": {
+    "mainMenu": {
+      "title": "⚙️ Bot Setup Menü",
+      "description": "Wähle eine Kategorie aus dem Dropdown-Menü:",
+      "placeholder": "📋 Kategorie wählen...",
+      "footer": "Wähle eine Kategorie um zu starten",
+      "categories": {
+        "servers": {
+          "label": "Server Verwaltung",
+          "labelWithEmoji": "📊 Server Verwaltung",
+          "description": "FS Server verwalten und Monitoring steuern",
+          "emoji": "📊"
+        },
+        "intervals": {
+          "label": "Update-Intervalle",
+          "labelWithEmoji": "⏱️ Update-Intervalle",
+          "description": "Aktualisierungszeiten anpassen",
+          "emoji": "⏱️"
+        },
+        "embed": {
+          "label": "Embed Design",
+          "labelWithEmoji": "🎨 Embed Design",
+          "description": "Farben und Anzeigeoptionen",
+          "emoji": "🎨"
+        },
+        "buttons": {
+          "label": "Button Einstellungen",
+          "labelWithEmoji": "🔘 Button Einstellungen",
+          "description": "Interactive Buttons konfigurieren",
+          "emoji": "🔘"
+        },
+        "permissions": {
+          "label": "Berechtigungen",
+          "labelWithEmoji": "🔐 Berechtigungen",
+          "description": "Setup-Zugriff verwalten",
+          "emoji": "🔐"
+        },
+        "global": {
+          "label": "Globale Einstellungen",
+          "labelWithEmoji": "⚙️ Globale Einstellungen",
+          "description": "Allgemeine Bot-Einstellungen",
+          "emoji": "⚙️"
+        },
+        "texts": {
+          "label": "Texte & Sprache",
+          "labelWithEmoji": "🌐 Texte & Sprache",
+          "description": "Sprache und Texte anpassen",
+          "emoji": "🌐"
+        }
+      }
+    },
+    "serverManagement": {
+      "title": "📊 Server Verwaltung",
+      "description": "Wähle eine Aktion aus:",
+      "placeholder": "🔧 Aktion wählen...",
+      "actions": {
+        "add": {
+          "label": "Server hinzufügen",
+          "labelWithEmoji": "➕ Server hinzufügen",
+          "description": "Neuen FS Server hinzufügen",
+          "emoji": "➕"
+        },
+        "edit": {
+          "label": "Server bearbeiten",
+          "labelWithEmoji": "✏️ Server bearbeiten",
+          "description": "Bestehenden Server bearbeiten",
+          "emoji": "✏️"
+        },
+        "delete": {
+          "label": "Server löschen",
+          "labelWithEmoji": "🗑️ Server löschen",
+          "description": "Server aus dem Monitoring entfernen",
+          "emoji": "🗑️"
+        },
+        "toggle": {
+          "label": "Monitoring an/aus",
+          "labelWithEmoji": "🔄 Monitoring an/aus",
+          "description": "Server-Überwachung aktivieren/deaktivieren",
+          "emoji": "🔄"
+        },
+        "back": {
+          "label": "← Zurück zum Hauptmenü",
+          "labelWithEmoji": "← Zurück zum Hauptmenü",
+          "description": "Zurück zur Kategorieauswahl",
+          "emoji": "↩️"
+        }
+      },
+      "toggle": {
+        "enabled": {
+          "title": "✅ Monitoring aktiviert",
+          "description": "**{serverName}**\nMonitoring wurde aktiviert!"
+        },
+        "disabled": {
+          "title": "⏸️ Monitoring deaktiviert",
+          "description": "**{serverName}**\nMonitoring wurde pausiert."
+        },
+        "selectPrompt": "🔄 Monitoring an/aus",
+        "selectDescription": "Wähle einen Server oder aktiviere/deaktiviere alle auf einmal:",
+        "selectPlaceholder": "🔄 Server wählen...",
+        "noServers": "❌ Keine Server vorhanden!",
+        "stats": "📊 Statistik",
+        "statsValue": "✅ Aktiv: {active}\n⏸️ Pausiert: {inactive}\n📋 Gesamt: {total}",
+        "active": "Aktiv",
+        "paused": "Pausiert",
+        "separator": "Einzelne Server:",
+        "separatorSelected": {
+          "title": "ℹ️ Nur ein Trenner",
+          "description": "Das ist nur ein optischer Trenner.\n\nBitte wähle einen Server oder eine der Aktionen darüber."
+        },
+        "allOn": {
+          "label": "Alle aktivieren",
+          "description": "Alle Server-Überwachung aktivieren",
+          "emoji": "✅",
+          "success": {
+            "title": "✅ Alle Server aktiviert",
+            "description": "**{count} Server** wurden aktiviert!\n\n✅ Monitoring läuft für alle Server."
+          }
+        },
+        "allOff": {
+          "label": "Alle deaktivieren",
+          "description": "Alle Server-Überwachung pausieren",
+          "emoji": "⏸️",
+          "success": {
+            "title": "⏸️ Alle Server deaktiviert",
+            "description": "**{count} Server** wurden pausiert!\n\n⏸️ Monitoring ist für alle Server gestoppt."
+          }
+        }
+      },
+      "add": {
+        "modalTitle": "➕ FS Server hinzufügen",
+        "fields": {
+          "name": {
+            "label": "Server Name",
+            "placeholder": "z.B. Mein FS25 Server"
+          },
+          "statsUrl": {
+            "label": "Stats URL (erforderlich)",
+            "placeholder": "http://server:8080/feed/dedicated-server-stats.xml"
+          },
+          "careerUrl": {
+            "label": "Career Savegame URL (optional)",
+            "placeholder": "http://server:8080/feed/...-savegame.html?..."
+          },
+          "modListUrl": {
+            "label": "Mod List URL (optional)",
+            "placeholder": "http://server:8080/mods.html"
+          }
+        },
+        "channelSelect": {
+          "title": "📺 Channel auswählen",
+          "description": "Server **{serverName}** wird hinzugefügt.\n\nWähle den Channel, in dem die Status-Updates erscheinen sollen:",
+          "descriptionWithWarning": "Server **{serverName}** wird hinzugefügt.\n\nWähle den Channel, in dem die Status-Updates erscheinen sollen:\n\n⚠️ **Achtung:** {count} Channel(s) haben fehlende Berechtigungen!",
+          "placeholder": "📺 Channel für Status-Updates wählen...",
+          "statsUrl": "🔗 Stats URL",
+          "permissions": "📋 Benötigte Berechtigungen",
+          "permissionsList": "👁️ Kanal ansehen\n💬 Nachrichten senden\n🔗 Embeds verwenden\n📁 Dateien anhängen\n📜 Nachrichtenverlauf"
+        },
+        "success": {
+          "title": "✅ FS Server hinzugefügt!",
+          "server": "🚜 Server",
+          "statsUrl": "🔗 Stats URL",
+          "channel": "📺 Channel",
+          "footer": "Monitoring wurde gestartet!"
+        },
+        "noChannels": "❌ Keine Text-Channels gefunden!"
+      },
+      "edit": {
+        "modalTitle": "✏️ {serverName} bearbeiten",
+        "selectPrompt": "✏️ Server bearbeiten",
+        "selectDescription": "Wähle den Server, den du bearbeiten möchtest:",
+        "selectPlaceholder": "🖊️ Server zum Bearbeiten wählen...",
+        "noServers": "❌ Keine Server vorhanden! Füge erst einen Server hinzu.",
+        "success": {
+          "title": "✅ Server aktualisiert",
+          "name": "🚜 Name",
+          "statsUrl": "🔗 Stats URL"
+        }
+      },
+      "delete": {
+        "selectPrompt": "🗑️ Server löschen",
+        "selectDescription": "⚠️ Wähle den Server, den du entfernen möchtest:",
+        "selectPlaceholder": "🗑️ Server zum Löschen wählen...",
+        "noServers": "❌ Keine Server vorhanden!",
+        "success": {
+          "title": "✅ Server gelöscht",
+          "description": "Server **{serverName}** wurde entfernt.\n\n✅ Status-Message wurde gelöscht"
+        }
+      }
+    },
+    "intervals": {
+      "title": "⏱️ Update-Intervalle",
+      "description": "Wähle einen Server aus, um sein Update-Intervall zu ändern:",
+      "noServers": "❌ Keine Server konfiguriert!\n\nFüge erst einen Server unter \"Server Verwaltung\" hinzu.",
+      "selectPlaceholder": "⏱️ Server wählen...",
+      "serverDescription": "Aktuell: {interval}s",
+      "changeTitle": "⏱️ {serverName} - Intervall ändern",
+      "changeDescription": "Aktuell: **{interval}s**\n\nWähle ein neues Update-Intervall:",
+      "recommendation": "💡 Empfehlung",
+      "recommendationText": "10 Sekunden ist optimal für die meisten Server.\nKürzere Intervalle erhöhen die Serverlast.",
+      "optionsPlaceholder": "⏱️ Intervall wählen...",
+      "options": {
+        "5s": {
+          "label": "5 Sekunden",
+          "description": "Sehr häufig (hohe Last)",
+          "emoji": "⚡"
+        },
+        "10s": {
+          "label": "10 Sekunden",
+          "description": "Standard (empfohlen)",
+          "emoji": "✅"
+        },
+        "30s": {
+          "label": "30 Sekunden",
+          "description": "Moderat",
+          "emoji": "📊"
+        },
+        "1m": {
+          "label": "1 Minute",
+          "description": "Gering",
+          "emoji": "⏰"
+        },
+        "5m": {
+          "label": "5 Minuten",
+          "description": "Sehr gering",
+          "emoji": "⏲️"
+        }
+      },
+      "success": {
+        "title": "✅ Intervall aktualisiert",
+        "description": "**{serverName}**\nNeues Intervall: **{interval}s**",
+        "footer": "Monitoring wurde neu gestartet!"
+      }
+    },
+    "embedDesign": {
+      "title": "🎨 Embed Design",
+      "description": "Passe das Aussehen der Status-Embeds an:",
+      "noServers": "❌ Keine Server konfiguriert!",
+      "options": "🖌️ Optionen",
+      "optionsText": "• Farben ändern\n• Felder ein-/ausblenden",
+      "selectPlaceholder": "🎨 Server wählen...",
+      "serverDescription": "Design anpassen",
+      "designOptions": {
+        "title": "🎨 {serverName} - Design",
+        "description": "Was möchtest du ändern?",
+        "placeholder": "🎨 Was möchtest du ändern?",
+        "colors": {
+          "label": "Farben ändern",
+          "labelWithEmoji": "🎨 Farben ändern",
+          "description": "Online/Offline Farben",
+          "emoji": "🎨"
+        },
+        "fields": {
+          "label": "Felder anzeigen/verstecken",
+          "labelWithEmoji": "👁️ Felder anzeigen/verstecken",
+          "description": "Map, Spieler, Mods, etc.",
+          "emoji": "👁️"
+        }
+      },
+      "fields": {
+        "title": "🎨 {serverName} - Felder",
+        "description": "Welches Feld möchtest du ein-/ausblenden?",
+        "placeholder": "👁️ Feld ein-/ausblenden...",
+        "map": {
+          "label": "Map-Anzeige",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "🗺️"
+        },
+        "password": {
+          "label": "Passwort-Anzeige",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "🔒"
+        },
+        "players": {
+          "label": "Spielerliste",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "👥"
+        },
+        "mods": {
+          "label": "Mod-Anzahl",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "🔧"
+        },
+        "money": {
+          "label": "Kontostand",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "💰"
+        },
+        "difficulty": {
+          "label": "Schwierigkeit",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "⚡"
+        },
+        "success": {
+          "title": "✅ Feld-Einstellungen aktualisiert",
+          "description": "**{serverName}**\nÄnderungen wurden gespeichert!"
+        }
+      },
+      "colors": {
+        "modalTitle": "🎨 {serverName} - Farben",
+        "fields": {
+          "online": {
+            "label": "Online Farbe (Hex)",
+            "placeholder": "#00FF00"
+          },
+          "offline": {
+            "label": "Offline Farbe (Hex)",
+            "placeholder": "#FF0000"
+          }
+        },
+        "success": {
+          "title": "✅ Farben aktualisiert",
+          "online": "🟢 Online",
+          "offline": "🔴 Offline"
+        }
+      }
+    },
+    "buttons": {
+      "title": "🔘 Button Einstellungen",
+      "description": "Konfiguriere die interaktiven Buttons unter den Status-Embeds:",
+      "noServers": "❌ Keine Server konfiguriert!",
+      "selectPlaceholder": "🔘 Server wählen...",
+      "serverDescription": "Button-Einstellungen",
+      "options": {
+        "title": "🔘 {serverName} - Buttons",
+        "description": "Konfiguriere die interaktiven Buttons:",
+        "placeholder": "🔘 Buttons konfigurieren...",
+        "toggle": {
+          "enable": "Buttons aktivieren",
+          "disable": "Buttons deaktivieren",
+          "descriptionEnable": "Buttons wieder anzeigen",
+          "descriptionDisable": "Alle Buttons ausblenden",
+          "emojiEnable": "🟢",
+          "emojiDisable": "🔴"
+        },
+        "players": {
+          "label": "Spieler-Button",
+          "active": "✅ Aktiv",
+          "inactive": "❌ Inaktiv",
+          "emoji": "👥"
+        },
+        "success": {
+          "title": "✅ Button-Einstellungen aktualisiert",
+          "description": "**{serverName}**\nÄnderungen wurden gespeichert!"
+        }
+      }
+    },
+    "permissions": {
+      "title": "🔐 Berechtigungen",
+      "description": "**Wer darf den Bot über `/setup` konfigurieren?**\n\n👑 **Administratoren** haben immer Zugriff!",
+      "allowedRoles": "🎭 Zusätzlich berechtigte Rollen",
+      "noRoles": "➖ Keine zusätzlichen Rollen konfiguriert",
+      "footer": "Füge Rollen hinzu, um nicht-Admins Zugriff zu geben",
+      "placeholder": "🔐 Aktion wählen...",
+      "actions": {
+        "roles": {
+          "label": "Rollen verwalten",
+          "labelWithEmoji": "🎭 Rollen verwalten",
+          "description": "Berechtigte Rollen hinzufügen/entfernen",
+          "emoji": "🎭"
+        }
+      },
+      "roleManagement": {
+        "title": "🎭 Berechtigte Rollen",
+        "description": "Klicke auf eine Rolle um sie hinzuzufügen/zu entfernen:",
+        "placeholder": "🎭 Rolle hinzufügen/entfernen...",
+        "currentRoles": "📋 Aktuell berechtigt",
+        "noRoles": "Keine Rollen",
+        "permitted": "✅ Berechtigt",
+        "notPermitted": "❌ Nicht berechtigt",
+        "noRolesFound": {
+          "title": "❌ Keine Rollen gefunden",
+          "description": "Erstelle erst Rollen auf deinem Server!"
+        }
+      },
+      "roleToggled": {
+        "titleAdded": "✅ Rolle hinzugefügt",
+        "titleRemoved": "✅ Rolle entfernt",
+        "description": "<@&{roleId}> wurde {action}!",
+        "accessList": "📋 Setup-Zugriff haben:",
+        "admins": "👑 **Alle Administratoren**",
+        "additionalRoles": "\n🎭 **Zusätzliche Rollen:** {roles}"
+      }
+    },
+    "global": {
+      "title": "⚙️ Globale Einstellungen",
+      "description": "Allgemeine Bot-Einstellungen für diesen Discord-Server:",
+      "placeholder": "⚙️ Einstellung wählen...",
+      "footer": {
+        "label": "📝 Footer-Text",
+        "value": "`{text}`"
+      },
+      "colors": {
+        "label": "🎨 Standard-Farben",
+        "value": "🟢 Online: `{online}`\n🔴 Offline: `{offline}`"
+      },
+      "actions": {
+        "footer": {
+          "label": "Footer-Text ändern",
+          "labelWithEmoji": "📝 Footer-Text ändern",
+          "description": "Text unten im Embed",
+          "emoji": "📝"
+        },
+        "colors": {
+          "label": "Standard-Farben ändern",
+          "labelWithEmoji": "🎨 Standard-Farben ändern",
+          "description": "Online/Offline Farben für neue Server",
+          "emoji": "🎨"
+        }
+      },
+      "footerModal": {
+        "title": "📝 Footer-Text ändern",
+        "field": {
+          "label": "Footer-Text",
+          "placeholder": "FS Server Status"
+        },
+        "success": {
+          "title": "✅ Footer-Text aktualisiert",
+          "description": "Neuer Footer: `{text}`"
+        }
+      },
+      "colorsModal": {
+        "title": "🎨 Standard-Farben ändern",
+        "fields": {
+          "online": {
+            "label": "Online Farbe (Hex)",
+            "placeholder": "#00FF00"
+          },
+          "offline": {
+            "label": "Offline Farbe (Hex)",
+            "placeholder": "#FF0000"
+          }
+        },
+        "success": {
+          "title": "✅ Standard-Farben aktualisiert",
+          "description": "Diese Farben werden für neue Server verwendet.",
+          "online": "🟢 Online",
+          "offline": "🔴 Offline"
+        }
+      }
+    },
+    "texts": {
+      "title": "🌐 Texte & Sprache",
+      "description": "Passe die Sprache und Texte des Bots an:",
+      "placeholder": "🌐 Aktion wählen...",
+      "currentLanguage": "📋 Aktuelle Sprache",
+      "availableLanguages": "📚 Verfügbare Sprachen",
+      "noLanguages": "Keine Sprachen gefunden",
+      "languageType": {
+        "standard": "Standard-Sprachdatei",
+        "custom": "Eigene Sprachdatei"
+      },
+      "customLanguageInfo": {
+        "title": "💡 Eigene Texte (Custom)",
+        "description": "Du kannst eine `custom.json` im Sprachen-Ordner erstellen, um alle Bot-Texte individuell anzupassen. Diese wird dann hier zur Auswahl angezeigt."
+      },
+      "actions": {
+        "globalLanguage": {
+          "label": "Globale Sprache",
+          "labelWithEmoji": "🌍 Globale Sprache",
+          "description": "Standard-Sprache für alle Server",
+          "emoji": "🌍"
+        },
+        "serverLanguage": {
+          "label": "Server-Sprache",
+          "labelWithEmoji": "🚜 Server-Sprache",
+          "description": "Sprache pro Server einstellen",
+          "emoji": "🚜"
+        }
+      },
+      "globalLanguage": {
+        "title": "🌍 Globale Sprache",
+        "description": "Diese Sprache wird für alle Server verwendet, die keine eigene Sprache haben:",
+        "currentLanguage": "📋 Aktuelle Sprache",
+        "placeholder": "🌐 Sprache wählen...",
+        "success": {
+          "title": "✅ Globale Sprache geändert",
+          "description": "Neue Sprache: **{language}**\n\n💡 Server mit eigener Sprache bleiben unverändert."
+        }
+      },
+      "serverLanguage": {
+        "selectServer": "🚜 Server wählen",
+        "selectDescription": "Wähle den Server, dessen Sprache du ändern möchtest:",
+        "selectPlaceholder": "🚜 Server wählen...",
+        "noServers": "❌ Keine Server konfiguriert!",
+        "title": "🚜 {serverName} - Sprache",
+        "description": "Wähle die Sprache für diesen Server:",
+        "currentLanguage": "📋 Aktuelle Sprache",
+        "useGlobal": "🌍 Global ({language})",
+        "useGlobalDescription": "Übernimmt die globalen Sprach-Einstellungen des Bots",
+        "placeholder": "🌐 Sprache wählen...",
+        "success": {
+          "title": "✅ Server-Sprache geändert",
+          "description": "**{serverName}**\nNeue Sprache: **{language}**"
+        }
+      }
+    },
+    "common": {
+      "back": "← Zurück",
+      "backToMain": "← Zurück zum Hauptmenü",
+      "cancel": "Abbrechen",
+      "save": "Speichern",
+      "enabled": "Aktiviert",
+      "disabled": "Deaktiviert",
+      "active": "✅ Aktiv",
+      "inactive": "❌ Inaktiv"
+    }
+  },
+  "status": {
+    "footer": "Last updated • {footerText}",
+    "online": {
+      "title": "{emoji} {serverName} Online",
+      "fields": {
+        "map": "{emoji} Karte",
+        "version": "{emoji} Version",
+        "password": "{emoji} Passwort",
+        "players": "{emoji} Spieler",
+        "mods": "{emoji} Mods",
+        "vehicles": "{emoji} Fahrzeuge",
+        "money": "{emoji} Geld",
+        "difficulty": "{emoji} Schwierigkeit",
+        "timeScale": "{emoji} Zeitskala",
+        "playerList": "{emoji} Online Spieler",
+        "greatDemands": "{emoji} Aktive Nachfrage"
+      },
+      "noPlayers": "➖ Niemand online",
+      "passwordYes": "🔒 Ja",
+      "passwordNo": "🔓 Nein"
+    },
+    "offline": {
+      "title": "{emoji} {serverName} Offline",
+      "description": "Server ist offline oder nicht erreichbar"
+    }
+  },
+  "buttons": {
+    "players": {
+      "label": "👥 Spieler anzeigen",
+      "response": "👥 **Online Spieler ({count}/{max}):**\n```\n{players}\n```",
+      "offline": "❌ **Server ist offline oder nicht erreichbar!**",
+      "noPlayers": "👥 **Online Spieler (0/{max}):**\n➖ Niemand online"
+    },
+    "error": {
+      "serverNotFound": "❌ Server nicht gefunden!",
+      "fetchFailed": "❌ Fehler beim Abrufen der Spielerliste!",
+      "notAvailable": "❌ Diese Funktion ist für FS Server nicht verfügbar."
+    }
+  },
+  "commands": {
+    "errors": {
+      "noPermission": "❌ Keine Berechtigung! Du benötigst Admin-Rechte oder eine berechtigte Rolle.",
+      "unknownCommand": "❌ Unbekannter Command!",
+      "generalError": "❌ Ein Fehler ist beim Ausführen des Commands aufgetreten!"
+    },
+    "reload": {
+      "success": "✅ Config neu geladen und Monitoring neu gestartet!"
+    },
+    "refresh": {
+      "success": "✅ Refresh abgeschlossen!\n\n📋 {deleted} Message(s) gelöscht\n{errors}\n\n💡 Neue Messages werden in wenigen Sekunden erstellt.",
+      "error": "❌ Fehler beim Refresh! Siehe Logs für Details."
+    },
+    "botinfo": {
+      "title": "🚜 FS Bot Informationen",
+      "fields": {
+        "developer": "👨‍💻 Original-Entwickler",
+        "source": "📂 Quellcode",
+        "servers": "🚜 Server",
+        "guilds": "🌐 Guilds",
+        "ping": "📡 Ping",
+        "version": "⚡ Version"
+      },
+      "footer": "FS Server Status Bot - Basiert auf MC Status Bot"
+    },
+    "checkperms": {
+      "title": {
+        "allPermissions": "✅ Alle Berechtigungen vorhanden",
+        "missingPermissions": "⚠️ Fehlende Berechtigungen"
+      },
+      "fields": {
+        "permissions": "📋 Berechtigungen",
+        "solution": {
+          "label": "💡 Lösung",
+          "text": "Gehe zu **Servereinstellungen → Rollen** und gib dem Bot die fehlenden Berechtigungen für diesen Channel."
+        }
+      },
+      "errors": {
+        "notTextChannel": "❌ Das ist kein Text-Channel!"
+      }
+    }
+  },
+  "errors": {
+    "general": "❌ Ein Fehler ist aufgetreten!",
+    "commandError": "❌ Ein Fehler ist beim Ausführen des Commands aufgetreten!",
+    "interactionError": "❌ Ein Fehler ist aufgetreten",
+    "sessionExpired": {
+      "title": "❌ Sitzung abgelaufen",
+      "description": "Deine Sitzung ist abgelaufen. Bitte starte erneut mit `/setup`",
+      "tip": "💡 Tipp",
+      "tipText": "Versuche schneller zu sein oder starte den Prozess neu."
+    },
+    "channelNotFound": "❌ Channel nicht gefunden",
+    "serverNotFound": "❌ Server nicht gefunden!",
+    "noServers": "❌ Keine Server vorhanden!",
+    "noServersAdd": "❌ Keine Server vorhanden! Füge erst einen Server hinzu.",
+    "noChannels": "❌ Keine Text-Channels gefunden!",
+    "noRoles": "❌ Keine Rollen gefunden!",
+    "noRolesDescription": "Erstelle erst Rollen auf deinem Server!",
+    "notTextChannel": "❌ Das ist kein Text-Channel!",
+    "missingPermissions": {
+      "title": "❌ Fehlende Berechtigungen",
+      "description": "Der Bot hat nicht alle benötigten Berechtigungen in <#{channelId}>!",
+      "permissionsList": "📋 Benötigte Berechtigungen",
+      "footer": "Bitte gib dem Bot die fehlenden Berechtigungen und versuche es erneut."
+    }
+  },
+  "permissions": {
+    "list": {
+      "viewChannel": "👁️ Kanal ansehen",
+      "sendMessages": "💬 Nachrichten senden",
+      "embedLinks": "🔗 Embeds verwenden",
+      "attachFiles": "📁 Dateien anhängen",
+      "readMessageHistory": "📜 Nachrichtenverlauf lesen"
+    }
+  },
+  "languages": {
+    "de": "🇩🇪 Deutsch",
+    "en": "🇬🇧 English",
+    "custom": "✏️ Eigene Texte"
+  }
+}

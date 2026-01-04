@@ -1,0 +1,27 @@
+{
+  "name": "fs-server-status-bot",
+  "version": "1.0.0",
+  "description": "Farming Simulator Dedicated Server Status Bot for Discord - Feature-identical to MC Bot v5.1.2",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": [
+    "discord",
+    "bot",
+    "farming-simulator",
+    "fs22",
+    "fs19",
+    "server-status",
+    "monitoring"
+  ],
+  "author": "Based on MC Server Status Bot by Gamer100309",
+  "license": "MIT",
+  "dependencies": {
+    "discord.js": "^14.25.1",
+    "gamedig": "^4.3.1"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
