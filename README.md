@@ -4,7 +4,7 @@
 
 \*\*Feature-identical Discord bot for monitoring Farming Simulator dedicated servers\*\*  
 
-Based on \[MC Server Status Bot v5.1.2](https://github.com/Gamer100309/MC-Server-Status-Bot) by Gamer100309
+Based on [MC Server Status Bot v5.1.2](https://github.com/Gamer100309/MC-Server-Status-Bot) by Gamer100309
 
 
 
