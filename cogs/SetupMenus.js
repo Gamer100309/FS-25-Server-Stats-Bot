@@ -1001,6 +1001,131 @@ class SetupMenus {
                     .addOptions(options)
             );
     }
+
+    // ═══════════════════════════════════════════════════════════
+    // FARM NAMES MANAGEMENT
+    // ═══════════════════════════════════════════════════════════
+
+    // ═══════════════════════════════════════════════════════════
+//  SERVER EDIT MENU - 3 OPTIONEN
+//  FÜR SetupMenus.js
+//  ERSETZE die Methode: createServerEditOptionsMenu
+// ═══════════════════════════════════════════════════════════
+
+    /**
+     * Server Edit Options Menu - 3 Optionen
+     */
+    createServerEditOptionsMenu(serverIdx, srv, gcfg = null) {
+        return new ActionRowBuilder()
+            .addComponents(
+                new StringSelectMenuBuilder()
+                    .setCustomId(`setup_server_edit_${serverIdx}`)
+                    .setPlaceholder(this.getText('setup.serverEdit.placeholder', {}, srv, gcfg) || '✏️ Was möchtest du bearbeiten?')
+                    .addOptions([
+                        {
+                            label: this.getText('setup.serverEdit.options.basisInfo.label', {}, srv, gcfg) || 'Basis-Infos',
+                            description: this.getText('setup.serverEdit.options.basisInfo.description', {}, srv, gcfg) || 'Name, Stats URL, Career URL',
+                            value: 'basis_info',
+                            emoji: '📝'
+                        },
+                        {
+                            label: this.getText('setup.serverEdit.options.weitereLinks.label', {}, srv, gcfg) || 'Weitere Links',
+                            description: this.getText('setup.serverEdit.options.weitereLinks.description', {}, srv, gcfg) || 'Vehicles, Economy, Mods, Map',
+                            value: 'weitere_links',
+                            emoji: '🔗'
+                        },
+                        {
+                            label: this.getText('setup.serverEdit.options.farmNames.label', {}, srv, gcfg) || 'Farm-Namen',
+                            description: this.getText('setup.serverEdit.options.farmNames.description', {}, srv, gcfg) || 'Farms umbenennen',
+                            value: 'farm_names',
+                            emoji: '🏠'
+                        },
+                        {
+                            label: this.getText('setup.common.back', {}, srv, gcfg) || '← Zurück',
+                            value: 'back',
+                            emoji: '↩️'
+                        }
+                    ])
+            );
+    }
+
+    /**
+     * Farm Names Menu
+     */
+    createFarmNamesMenu(serverIdx, srv, gcfg = null) {
+        const farmNames = srv.farmNames || {};
+        
+        const embed = new EmbedBuilder()
+            .setColor('#8B4513')
+            .setTitle(this.getText('setup.farmNames.title', { serverName: srv.serverName }, srv, gcfg) || `🏠 ${srv.serverName} - Farm-Namen`)
+            .setDescription(this.getText('setup.farmNames.description', {}, srv, gcfg) || 'Wähle eine Farm zum Umbenennen:');
+
+        // Show current farm names
+        if (Object.keys(farmNames).length > 0) {
+            const farmList = Object.entries(farmNames)
+                .sort(([a], [b]) => parseInt(a) - parseInt(b))
+                .map(([id, name]) => `🏠 **Farm ${id}:** ${name}`)
+                .join('\n');
+
+            embed.addFields({
+                name: this.getText('setup.farmNames.currentNames', {}, srv, gcfg) || '📋 Aktuelle Namen',
+                value: farmList,
+                inline: false
+            });
+        } else {
+            embed.addFields({
+                name: this.getText('setup.farmNames.noNames', {}, srv, gcfg) || 'ℹ️ Keine Farm-Namen',
+                value: this.getText('setup.farmNames.noNamesText', {}, srv, gcfg) || 'Verwende `/vehicles` um Farms automatisch zu erkennen.',
+                inline: false
+            });
+        }
+
+        return embed;
+    }
+
+    /**
+     * Farm Names Select Menu
+     */
+    createFarmNamesSelect(serverIdx, srv, gcfg = null) {
+        const farmNames = srv.farmNames || {};
+
+        if (Object.keys(farmNames).length === 0) {
+            return new ActionRowBuilder()
+                .addComponents(
+                    new StringSelectMenuBuilder()
+                        .setCustomId(`setup_farm_names_back_${serverIdx}`)
+                        .setPlaceholder(this.getText('setup.common.back', {}, srv, gcfg) || '← Zurück')
+                        .addOptions([{
+                            label: this.getText('setup.common.back', {}, srv, gcfg) || '← Zurück',
+                            value: 'back',
+                            emoji: '↩️'
+                        }])
+                );
+        }
+
+        const options = Object.entries(farmNames)
+            .sort(([a], [b]) => parseInt(a) - parseInt(b))
+            .map(([id, name]) => ({
+                label: `Farm ${id}: ${name}`,
+                description: this.getText('setup.farmNames.renameDescription', {}, srv, gcfg) || 'Klicken zum Umbenennen',
+                value: id,
+                emoji: '🏠'
+            }));
+
+        options.push({
+            label: this.getText('setup.common.back', {}, srv, gcfg) || '← Zurück',
+            value: 'back',
+            emoji: '↩️'
+        });
+
+        return new ActionRowBuilder()
+            .addComponents(
+                new StringSelectMenuBuilder()
+                    .setCustomId(`setup_farm_rename_${serverIdx}`)
+                    .setPlaceholder(this.getText('setup.farmNames.selectPlaceholder', {}, srv, gcfg) || '🏠 Farm zum Umbenennen wählen...')
+                    .addOptions(options)
+            );
+    }
 }
 
 module.exports = { SetupMenus };
