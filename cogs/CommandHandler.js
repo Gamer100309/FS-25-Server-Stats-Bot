@@ -8,7 +8,6 @@ const { PermissionManager } = require('./PermissionManager');
 const { SetupMenus } = require('./SetupMenus');
 const { VehicleMenus } = require('./VehicleMenus');
 const { StatusChecker } = require('./StatusChecker');
-const { IconManager } = require('./IconManager');
 
 class CommandHandler {
     constructor(client, configManager, logger, monitoringManager, messageHandler) {
@@ -347,7 +346,7 @@ class CommandHandler {
     async handleVehiclesCommand(interaction, gcfg) {
         try {
             // Defer reply since fetching data might take a moment
-            await interaction.deferReply({ ephemeral: false });
+            await interaction.deferReply({ ephemeral: true });
 
             // Find the server config for this guild
             if (gcfg.servers.length === 0) {
@@ -361,14 +360,30 @@ class CommandHandler {
             const srv = gcfg.servers[0];
 
             // Fetch vehicle data
-            const iconMgr = new IconManager(interaction.guildId, this.configManager);
-            const data = await StatusChecker.getStatus(srv, iconMgr);
+            const data = await StatusChecker.getStatus(srv);
 
             if (!data.online || !data.vehicles) {
                 await interaction.editReply({
                     content: '❌ Server is offline or vehicle data unavailable!'
                 });
                 return;
+            }
+
+            // ═══════════════════════════════════════════════════════════
+            // AUTO-DETECT FARMS: Initialize farmNames if not exists
+            // ═══════════════════════════════════════════════════════════
+            if (!srv.farmNames || Object.keys(srv.farmNames).length === 0) {
+                srv.farmNames = {};
+                
+                // Extract all farm IDs from vehicles data
+                Object.keys(data.vehicles.farms).forEach(farmId => {
+                    srv.farmNames[farmId] = `Farm ${farmId}`;
+                });
+
+                // Save config
+                this.configManager.saveGuild(interaction.guildId, gcfg);
+                
+                this.logger.info(`Auto-detected ${Object.keys(srv.farmNames).length} farms for ${srv.serverName}`);
             }
 
             // Get farm names from config
