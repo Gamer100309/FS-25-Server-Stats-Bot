@@ -1579,16 +1579,16 @@ class InteractionHandler {
         }
 		
 		// Basic Info Modal
-        if (interaction.customId.startsWith('modal_basic_info_')) {
+        if (interaction.customId.startsWith('modal_basis_info_')) {
             const idx = parseInt(interaction.customId.split('_')[3]);
-            await this.handleBasicInfoSubmit(interaction, idx, gcfg);
+            await this.handleBasisInfoSubmit(interaction, idx, gcfg);
             return;
         }
 
         // Advanced URLs Modal
-        if (interaction.customId.startsWith('modal_advanced_urls_')) {
+        if (interaction.customId.startsWith('modal_weitere_links_')) {
             const idx = parseInt(interaction.customId.split('_')[3]);
-            await this.handleAdvancedUrlsSubmit(interaction, idx, gcfg);
+            await this.handleWeitereLinksSubmit(interaction, idx, gcfg);
             return;
         }
     }
@@ -2205,7 +2205,7 @@ class InteractionHandler {
     /**
      * Show Basic Info Modal
      */
-    async handleBasicInfoModal(interaction, idx, gcfg) {
+    async handleBasisInfoModal(interaction, idx, gcfg) {
         const srv = gcfg.servers[idx];
         
         const serverName = (srv.serverName || '').substring(0, 45);
@@ -2213,7 +2213,7 @@ class InteractionHandler {
         const careerUrl = (srv.career_url || srv.career_savegame_url || '').substring(0, 2000);
 
         const modal = new ModalBuilder()
-            .setCustomId(`modal_basic_info_${idx}`)
+            .setCustomId(`modal_basis_info_${idx}`)
             .setTitle(`📝 ${serverName} - Basic Info`);
 
         modal.addComponents(
@@ -2252,7 +2252,7 @@ class InteractionHandler {
     /**
      * Show Advanced URLs Modal
      */
-    async handleAdvancedUrlsModal(interaction, idx, gcfg) {
+    async handleWeitereLinksModal(interaction, idx, gcfg) {
         const srv = gcfg.servers[idx];
         
         const modListUrl = (srv.mod_list_url || '').substring(0, 2000);
@@ -2261,7 +2261,7 @@ class InteractionHandler {
         const mapScreenshotUrl = (srv.map_screenshot_url || '').substring(0, 2000);
 
         const modal = new ModalBuilder()
-            .setCustomId(`modal_advanced_urls_${idx}`)
+            .setCustomId(`modal_weitere_links_${idx}`)
             .setTitle(`🔗 ${srv.serverName.substring(0, 30)} - URLs`);
 
         modal.addComponents(
@@ -2309,7 +2309,7 @@ class InteractionHandler {
     /**
      * Handle Basic Info Modal Submit
      */
-    async handleBasicInfoSubmit(interaction, idx, gcfg) {
+    async handleBasisInfoSubmit(interaction, idx, gcfg) {
         const srv = gcfg.servers[idx];
 
         srv.serverName = interaction.fields.getTextInputValue('server_name');
@@ -2340,7 +2340,7 @@ class InteractionHandler {
     /**
      * Handle Advanced URLs Modal Submit
      */
-    async handleAdvancedUrlsSubmit(interaction, idx, gcfg) {
+    async handleWeitereLinksSubmit(interaction, idx, gcfg) {
         const srv = gcfg.servers[idx];
 
         srv.mod_list_url = interaction.fields.getTextInputValue('mod_list_url') || '';
