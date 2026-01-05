@@ -14,6 +14,7 @@ const {
     ChannelType 
 } = require('discord.js');
 const { SetupMenus } = require('./SetupMenus');
+const { VehicleMenus } = require('./VehicleMenus');
 const { StatusChecker } = require('./StatusChecker');
 
 class InteractionHandler {
@@ -24,15 +25,16 @@ class InteractionHandler {
         this.monitoringManager = monitoringManager;
         this.messageHandler = messageHandler;
 		this.vehicleMenus = new VehicleMenus(messageHandler);
-        
-        // SetupMenus mit MessageHandler initialisieren
-        this.setupMenus = new SetupMenus(messageHandler);
-        
-        if (!client.tempServerData) {
+		this.setupMenus = new SetupMenus(messageHandler);
+		
+		if (!client.tempServerData) {
             client.tempServerData = new Map();
-        },
-		if (!client.vehicleData) {
-    client.vehicleData = new Map();
+        }
+        
+        // Vehicle Data Map für Session Management
+        if (!client.vehicleData) {
+            client.vehicleData = new Map();
+        }
     }
 
     async handle(interaction) {
@@ -593,6 +595,58 @@ class InteractionHandler {
             await this.handleServerDelete(interaction, gcfg);
             return;
         }
+		
+		// Server Edit Options
+        if (interaction.customId.startsWith('setup_server_edit_')) {
+            const idx = parseInt(interaction.customId.split('_')[3]);
+            const value = interaction.values[0];
+
+            if (value === 'back') {
+                // Back to server management
+                await interaction.update({
+                    embeds: [this.setupMenus.createServerManagementEmbed(gcfg)],
+                    components: [this.setupMenus.createServerMenu(gcfg)]
+                });
+                return;
+            }
+
+            if (value === 'basis_info') {
+                await this.handleBasisInfoModal(interaction, idx, gcfg);
+                return;
+            }
+
+            if (value === 'weitere_links') {
+                await this.handleWeitereLinksModal(interaction, idx, gcfg);
+                return;
+            }
+
+            if (value === 'farm_names') {
+                await this.handleFarmNamesMenu(interaction, idx, gcfg);
+                return;
+            }
+        }
+
+        // Farm Names Select
+        if (interaction.customId.startsWith('setup_farm_rename_')) {
+            const idx = parseInt(interaction.customId.split('_')[3]);
+            const value = interaction.values[0];
+
+            if (value === 'back') {
+                await this.handleServerEditMenu(interaction, idx, gcfg);
+                return;
+            }
+
+            const farmId = value;
+            await this.handleFarmRenameModal(interaction, idx, farmId, gcfg);
+            return;
+        }
+
+        // Farm Names Back (when no farms)
+        if (interaction.customId.startsWith('setup_farm_names_back_')) {
+            const idx = parseInt(interaction.customId.split('_')[4]);
+            await this.handleServerEditMenu(interaction, idx, gcfg);
+            return;
+        }
 
         // Channel Selection
         if (interaction.customId === 'select_channel') {
@@ -1061,50 +1115,48 @@ class InteractionHandler {
 		}
 
 		if (action === 'add') {
-			// ⭐ HARDCODED - NO MessageHandler!
-			const modal = new ModalBuilder()
-				.setCustomId('modal_add_server')
-				.setTitle('➕ Add FS Server');
+            const modal = new ModalBuilder()
+                .setCustomId('modal_add_server')
+                .setTitle('➕ FS Server hinzufügen');
 
-			// ⭐ SHORTENED PLACEHOLDERS (max 100 chars!)
-			modal.addComponents(
-				new ActionRowBuilder().addComponents(
-					new TextInputBuilder()
-						.setCustomId('server_name')
-						.setLabel('Server Name')
-						.setPlaceholder('My FS25 Server')
-						.setStyle(TextInputStyle.Short)
-						.setRequired(true)
-				),
-				new ActionRowBuilder().addComponents(
-					new TextInputBuilder()
-						.setCustomId('stats_url')
-						.setLabel('Stats URL (required)')
-						.setPlaceholder('http://ip:8080/feed/dedicated-server-stats.xml')
-						.setStyle(TextInputStyle.Short)
-						.setRequired(true)
-				),
-				new ActionRowBuilder().addComponents(
-					new TextInputBuilder()
-						.setCustomId('career_savegame_url')
-						.setLabel('Career URL (optional)')
-						.setPlaceholder('http://ip:8080/feed/...-savegame.html?...')
-						.setStyle(TextInputStyle.Short)
-						.setRequired(false)
-				),
-				new ActionRowBuilder().addComponents(
-					new TextInputBuilder()
-						.setCustomId('mod_list_url')
-						.setLabel('Mod List URL (optional)')
-						.setPlaceholder('http://ip:8080/mods.html')
-						.setStyle(TextInputStyle.Short)
-						.setRequired(false)
-				)
-			);
+            modal.addComponents(
+                new ActionRowBuilder().addComponents(
+                    new TextInputBuilder()
+                        .setCustomId('server_name')
+                        .setLabel('Server Name (Pflicht)')
+                        .setPlaceholder('Mein FS25 Server')
+                        .setStyle(TextInputStyle.Short)
+                        .setRequired(true)
+                ),
+                new ActionRowBuilder().addComponents(
+                    new TextInputBuilder()
+                        .setCustomId('stats_url')
+                        .setLabel('Stats XML URL (Pflicht)')
+                        .setPlaceholder('http://ip:8080/feed/dedicated-server-stats.xml')
+                        .setStyle(TextInputStyle.Short)
+                        .setRequired(true)
+                ),
+                new ActionRowBuilder().addComponents(
+                    new TextInputBuilder()
+                        .setCustomId('career_url')
+                        .setLabel('Career Savegame URL (Optional)')
+                        .setPlaceholder('http://ip:8080/feed/careerSavegame.html?code=...')
+                        .setStyle(TextInputStyle.Short)
+                        .setRequired(false)
+                ),
+                new ActionRowBuilder().addComponents(
+                    new TextInputBuilder()
+                        .setCustomId('info_hint')
+                        .setLabel('ℹ️ Weitere URLs hinzufügen')
+                        .setValue('Nach dem Hinzufügen: /setup → Server bearbeiten → Weitere Links')
+                        .setStyle(TextInputStyle.Paragraph)
+                        .setRequired(false)
+                )
+            );
 
-			await interaction.showModal(modal);
-			return;
-		}
+            await interaction.showModal(modal);
+            return;
+        }
 
 		if (action === 'edit') {
 			if (gcfg.servers.length === 0) {
@@ -1178,56 +1230,20 @@ class InteractionHandler {
 	}
 
     async handleServerEdit(interaction, gcfg) {
-		const idx = parseInt(interaction.values[0]);
-		const srv = gcfg.servers[idx];
-
-		// ⭐ TRUNCATE everything to prevent "Invalid string length"
-		const serverName = (srv.serverName || '').substring(0, 40);
-		const statsUrl = (srv.stats_url || '').substring(0, 2000);
-		const careerUrl = (srv.career_savegame_url || '').substring(0, 2000);
-		const modUrl = (srv.mod_list_url || '').substring(0, 2000);
-
-		const modal = new ModalBuilder()
-			.setCustomId(`modal_edit_server_${idx}`)
-			.setTitle(`✏️ ${serverName}`);
-
-		modal.addComponents(
-			new ActionRowBuilder().addComponents(
-				new TextInputBuilder()
-					.setCustomId('server_name')
-					.setLabel('Server Name')
-					.setValue(serverName)
-					.setStyle(TextInputStyle.Short)
-					.setRequired(true)
-			),
-			new ActionRowBuilder().addComponents(
-				new TextInputBuilder()
-					.setCustomId('stats_url')
-					.setLabel('Stats URL')
-					.setValue(statsUrl)
-					.setStyle(TextInputStyle.Short)
-					.setRequired(true)
-			),
-			new ActionRowBuilder().addComponents(
-				new TextInputBuilder()
-					.setCustomId('career_savegame_url')
-					.setLabel('Career URL')
-					.setValue(careerUrl)
-					.setStyle(TextInputStyle.Short)
-					.setRequired(false)
-			),
-			new ActionRowBuilder().addComponents(
-				new TextInputBuilder()
-					.setCustomId('mod_list_url')
-					.setLabel('Mod List URL')
-					.setValue(modUrl)
-					.setStyle(TextInputStyle.Short)
-					.setRequired(false)
-			)
-		);
-
-		await interaction.showModal(modal);
-	}
+        const idx = parseInt(interaction.values[0]);
+        const srv = gcfg.servers[idx];
+        
+        // Zeige Untermenü mit 3 Optionen
+        await interaction.update({
+            embeds: [new EmbedBuilder()
+                .setColor('#FFA500')
+                .setTitle(`✏️ ${srv.serverName}`)
+                .setDescription(this.messageHandler 
+                    ? this.messageHandler.get('setup.serverEdit.description', {}, srv, gcfg)
+                    : 'Was möchtest du bearbeiten?')],
+            components: [this.setupMenus.createServerEditOptionsMenu(idx, srv, gcfg)]
+        });
+    }
 
 	async handleEditServerModal(interaction, gcfg) {
 		const idx = parseInt(interaction.customId.split('_')[3]);
@@ -1414,6 +1430,20 @@ class InteractionHandler {
             await this.handleAddServerModal(interaction, gcfg);
             return;
         }
+		
+		// Basis Info Modal
+        if (interaction.customId.startsWith('modal_basis_info_')) {
+            const idx = parseInt(interaction.customId.split('_')[3]);
+            await this.handleBasisInfoSubmit(interaction, idx, gcfg);
+            return;
+        }
+
+        // Weitere Links Modal
+        if (interaction.customId.startsWith('modal_weitere_links_')) {
+            const idx = parseInt(interaction.customId.split('_')[3]);
+            await this.handleWeitereLinksSubmit(interaction, idx, gcfg);
+            return;
+        }
 
         if (interaction.customId.startsWith('modal_edit_server_')) {
             await this.handleEditServerModal(interaction, gcfg);
@@ -1537,100 +1567,129 @@ class InteractionHandler {
             });
             return;
         }
+		
+		// Farm Rename Modal
+        if (interaction.customId.startsWith('modal_farm_rename_')) {
+            const parts = interaction.customId.split('_');
+            const idx = parseInt(parts[3]);
+            const farmId = parts[4];
+            
+            await this.handleFarmRenameSubmit(interaction, idx, farmId, gcfg);
+            return;
+        }
+		
+		// Basic Info Modal
+        if (interaction.customId.startsWith('modal_basic_info_')) {
+            const idx = parseInt(interaction.customId.split('_')[3]);
+            await this.handleBasicInfoSubmit(interaction, idx, gcfg);
+            return;
+        }
+
+        // Advanced URLs Modal
+        if (interaction.customId.startsWith('modal_advanced_urls_')) {
+            const idx = parseInt(interaction.customId.split('_')[3]);
+            await this.handleAdvancedUrlsSubmit(interaction, idx, gcfg);
+            return;
+        }
     }
 
     async handleAddServerModal(interaction, gcfg) {
-		const serverName = interaction.fields.getTextInputValue('server_name');
-		const statsUrl = interaction.fields.getTextInputValue('stats_url');
-		const careerSavegameUrl = interaction.fields.getTextInputValue('career_savegame_url') || '';
-		const modListUrl = interaction.fields.getTextInputValue('mod_list_url') || '';
+        const serverName = interaction.fields.getTextInputValue('server_name');
+        const statsUrl = interaction.fields.getTextInputValue('stats_url');
+        const careerUrl = interaction.fields.getTextInputValue('career_url') || '';
+        // info_hint wird ignoriert (nur Anzeige)
 
-		// Save to temp data
-		this.client.tempServerData.set(interaction.user.id, {
-			serverName,
-			stats_url: statsUrl,
-			career_savegame_url: careerSavegameUrl,
-			mod_list_url: modListUrl
-		});
+        // Save to temp data - NUR Basis-URLs
+        this.client.tempServerData.set(interaction.user.id, {
+            serverName,
+            stats_url: statsUrl,
+            career_url: careerUrl,
+            career_savegame_url: careerUrl, // Backward compatibility
+            vehicles_url: '',
+            economy_url: '',
+            mod_list_url: '',
+            map_screenshot_url: ''
+        });
 
-		const { PermissionManager } = require('./PermissionManager');
-		
-		// Channels with permissions check
-		const channels = await Promise.all(
-			interaction.guild.channels.cache
-				.filter(c => c.type === ChannelType.GuildText)
-				.map(async c => {
-					const permCheck = await PermissionManager.checkChannelPerms(c);
-					return {
-						channel: c,
-						hasPerms: permCheck.hasAll
-					};
-				})
-		);
+        const { PermissionManager } = require('./PermissionManager');
+        
+        // Channels with permissions check
+        const channels = await Promise.all(
+            interaction.guild.channels.cache
+                .filter(c => c.type === ChannelType.GuildText)
+                .map(async c => {
+                    const permCheck = await PermissionManager.checkChannelPerms(c);
+                    return {
+                        channel: c,
+                        hasPerms: permCheck.hasAll
+                    };
+                })
+        );
 
-		if (channels.length === 0) {
-			const errorMsg = this.messageHandler
-				? this.messageHandler.get('setup.serverManagement.add.noChannels', {}, null, gcfg)
-				: '❌ No text channels found!';
+        if (channels.length === 0) {
+            return interaction.reply({
+                content: '❌ Keine Text-Channels gefunden!',
+                ephemeral: true
+            });
+        }
 
-			return interaction.reply({
-				content: errorMsg,
-				ephemeral: true
-			});
-		}
+        // Sort: Channels with perms first
+        channels.sort((a, b) => {
+            if (a.hasPerms && !b.hasPerms) return -1;
+            if (!a.hasPerms && b.hasPerms) return 1;
+            return 0;
+        });
 
-		// Sort: Channels with perms first
-		channels.sort((a, b) => {
-			if (a.hasPerms && !b.hasPerms) return -1;
-			if (!a.hasPerms && b.hasPerms) return 1;
-			return 0;
-		});
+        const options = channels.slice(0, 25).map(({ channel: c, hasPerms }) => ({
+            label: `${hasPerms ? '✅' : '⚠️'} #${c.name}`,
+            description: hasPerms 
+                ? (c.topic ? c.topic.substring(0, 80) : 'Alle Berechtigungen vorhanden')
+                : 'Bot hat fehlende Berechtigungen!',
+            value: c.id,
+            emoji: hasPerms ? '💬' : '⚠️'
+        }));
 
-		const options = channels.slice(0, 25).map(({ channel: c, hasPerms }) => ({
-			label: `${hasPerms ? '✅' : '⚠️'} #${c.name}`,
-			description: hasPerms 
-				? (c.topic ? c.topic.substring(0, 80) : 'All permissions available')
-				: 'Bot has missing permissions!',
-			value: c.id,
-			emoji: hasPerms ? '💬' : '⚠️'
-		}));
+        const select = new ActionRowBuilder()
+            .addComponents(
+                new StringSelectMenuBuilder()
+                    .setCustomId('select_channel')
+                    .setPlaceholder('📺 Channel für Status-Updates wählen...')
+                    .addOptions(options)
+            );
 
-		const select = new ActionRowBuilder()
-			.addComponents(
-				new StringSelectMenuBuilder()
-					.setCustomId('select_channel')
-					.setPlaceholder('📺 Choose channel for status updates...')
-					.addOptions(options)
-			);
+        const warningChannels = channels.filter(c => !c.hasPerms);
+        
+        let description = `Server **${serverName}** wird hinzugefügt.\n\nWähle den Channel für Status-Updates:`;
+        
+        if (warningChannels.length > 0) {
+            description += `\n\n⚠️ **Warnung:** ${warningChannels.length} Channel(s) haben fehlende Berechtigungen!`;
+        }
 
-		const warningChannels = channels.filter(c => !c.hasPerms);
-		
-		const title = '📺 Select Channel';
-		
-		let description = `Server **${serverName}** will be added.\n\nChoose the channel where status updates should appear:`;
-		
-		if (warningChannels.length > 0) {
-			description += `\n\n⚠️ **Warning:** ${warningChannels.length} channel(s) have missing permissions!`;
-		}
+        description += `\n\n💡 **Tipp:** Weitere URLs (Vehicles, Economy, etc.) kannst du nach dem Hinzufügen über \`/setup → Server bearbeiten → Weitere Links\` eintragen!`;
 
 		await interaction.reply({
-			embeds: [new EmbedBuilder()
-				.setColor(warningChannels.length > 0 ? '#FFA500' : '#00FF00')
-				.setTitle(title)
-				.setDescription(description)
-				.addFields(
-					{ name: '🔗 Stats URL', value: `\`${statsUrl.substring(0, 100)}\``, inline: false },
-					{ 
-						name: '📋 Required Permissions', 
-						value: '👁️ View Channel\n💬 Send Messages\n🔗 Embed Links\n📁 Attach Files\n📜 Read Message History', 
-						inline: true 
-					}
-				)],
-			components: [select],
-			ephemeral: true
-		});
-	}
-
+            embeds: [
+                new EmbedBuilder()
+                    .setColor(warningChannels.length > 0 ? '#FFA500' : '#00FF00')
+                    .setTitle('📺 Channel auswählen')
+                    .setDescription(description)
+                    .addFields(
+                        [
+                            { name: '✅ Stats XML', value: `\`${statsUrl.substring(0, 80)}...\``, inline: false },
+                            careerUrl ? { name: '✅ Career Savegame', value: `\`${careerUrl.substring(0, 80)}...\``, inline: false } : null,
+                            { 
+                                name: '📋 Benötigte Berechtigungen', 
+                                value: '👁️ Kanal ansehen\n💬 Nachrichten senden\n🔗 Embeds verwenden\n📁 Dateien anhängen\n📜 Nachrichtenverlauf', 
+                                inline: true 
+                            }
+                        ].filter(f => f !== null)
+                    )
+            ],
+            components: [select],
+            ephemeral: true
+        });
+    }
+	
 	async handleEditServerModal(interaction, gcfg) {
 		const idx = parseInt(interaction.customId.split('_')[3]);
 		const srv = gcfg.servers[idx];
@@ -1917,6 +1976,493 @@ class InteractionHandler {
         });
 
         this.logger.success(`Server language for "${srv.serverName}" changed to ${languageCode} by ${interaction.user.tag}`);
+    }
+	
+	// ═══════════════════════════════════════════════════════════
+    // VEHICLE MENU HANDLERS
+    // ═══════════════════════════════════════════════════════════
+
+    async handleVehicleMainMenu(interaction, gcfg) {
+        const userId = interaction.user.id;
+        const vehicleDataStore = this.client.vehicleData.get(userId);
+
+        if (!vehicleDataStore) {
+            await interaction.reply({
+                content: '❌ Session expired! Please use `/vehicles` again.',
+                ephemeral: true
+            });
+            return;
+        }
+
+        const { vehicles, farmNames } = vehicleDataStore;
+        const action = interaction.values[0];
+
+        let embed, components;
+
+        switch (action) {
+            case 'fleet_stats':
+                embed = this.vehicleMenus.createFleetStats(vehicles, gcfg);
+                components = [this.vehicleMenus.createBackButton('main')];
+                break;
+
+            case 'top5':
+                embed = this.vehicleMenus.createTop5(vehicles, gcfg);
+                components = [this.vehicleMenus.createBackButton('main')];
+                break;
+
+            case 'value_breakdown':
+                embed = this.vehicleMenus.createValueBreakdown(vehicles, gcfg);
+                components = [this.vehicleMenus.createBackButton('main')];
+                break;
+
+            case 'farm_overview':
+                embed = this.vehicleMenus.createFarmOverview(vehicles, farmNames, gcfg);
+                components = [this.vehicleMenus.createFarmSelect(vehicles, farmNames, gcfg)];
+                break;
+
+            default:
+                await interaction.reply({
+                    content: '❌ Unknown option!',
+                    ephemeral: true
+                });
+                return;
+        }
+
+        await interaction.update({
+            embeds: [embed],
+            components: components
+        });
+    }
+
+    async handleVehicleFarmSelect(interaction, gcfg) {
+        const userId = interaction.user.id;
+        const vehicleDataStore = this.client.vehicleData.get(userId);
+
+        if (!vehicleDataStore) {
+            await interaction.reply({
+                content: '❌ Session expired! Please use `/vehicles` again.',
+                ephemeral: true
+            });
+            return;
+        }
+
+        const { vehicles, farmNames } = vehicleDataStore;
+        const farmId = interaction.values[0];
+
+        if (farmId === 'back') {
+            const embed = this.vehicleMenus.createMainMenu(vehicles, gcfg);
+            const select = this.vehicleMenus.createMainMenuSelect(gcfg);
+
+            await interaction.update({
+                embeds: [embed],
+                components: [select]
+            });
+            return;
+        }
+
+        const embed = this.vehicleMenus.createFarmDetails(farmId, vehicles, farmNames, gcfg);
+        const backRow = this.vehicleMenus.createBackButton('main');
+
+        await interaction.update({
+            embeds: [embed],
+            components: [backRow]
+        });
+    }
+
+    async handleVehicleBack(interaction, gcfg) {
+        const userId = interaction.user.id;
+        const vehicleDataStore = this.client.vehicleData.get(userId);
+
+        if (!vehicleDataStore) {
+            await interaction.reply({
+                content: '❌ Session expired! Please use `/vehicles` again.',
+                ephemeral: true
+            });
+            return;
+        }
+
+        const { vehicles } = vehicleDataStore;
+
+        const embed = this.vehicleMenus.createMainMenu(vehicles, gcfg);
+        const select = this.vehicleMenus.createMainMenuSelect(gcfg);
+
+        await interaction.update({
+            embeds: [embed],
+            components: [select]
+        });
+    }
+	
+	// ═══════════════════════════════════════════════════════════
+    // FARM NAMES MANAGEMENT
+    // ═══════════════════════════════════════════════════════════
+
+    /**
+     * Handle Server Edit Menu
+     */
+    async handleServerEditMenu(interaction, idx, gcfg) {
+        const srv = gcfg.servers[idx];
+
+        await interaction.update({
+            embeds: [new EmbedBuilder()
+                .setColor('#FFA500')
+                .setTitle(`✏️ ${srv.serverName}`)
+                .setDescription(this.messageHandler 
+                    ? this.messageHandler.get('setup.serverEdit.description', {}, srv, gcfg)
+                    : 'Was möchtest du bearbeiten?')],
+            components: [this.setupMenus.createServerEditOptionsMenu(idx, srv, gcfg)]
+        });
+    }
+
+    /**
+     * Handle Farm Names Menu
+     */
+    async handleFarmNamesMenu(interaction, idx, gcfg) {
+        const srv = gcfg.servers[idx];
+
+        await interaction.update({
+            embeds: [this.setupMenus.createFarmNamesMenu(idx, srv, gcfg)],
+            components: [this.setupMenus.createFarmNamesSelect(idx, srv, gcfg)]
+        });
+    }
+
+    /**
+     * Handle Farm Rename Modal
+     */
+    async handleFarmRenameModal(interaction, idx, farmId, gcfg) {
+        const srv = gcfg.servers[idx];
+        const currentName = srv.farmNames?.[farmId] || `Farm ${farmId}`;
+
+        const modal = new ModalBuilder()
+            .setCustomId(`modal_farm_rename_${idx}_${farmId}`)
+            .setTitle(this.messageHandler
+                ? this.messageHandler.get('setup.farmNames.modal.title', { farmId }, srv, gcfg)
+                : `🏠 Farm ${farmId} umbenennen`);
+
+        modal.addComponents(
+            new ActionRowBuilder().addComponents(
+                new TextInputBuilder()
+                    .setCustomId('farm_name')
+                    .setLabel(this.messageHandler
+                        ? this.messageHandler.get('setup.farmNames.modal.label', {}, srv, gcfg)
+                        : 'Farm-Name')
+                    .setPlaceholder(this.messageHandler
+                        ? this.messageHandler.get('setup.farmNames.modal.placeholder', {}, srv, gcfg)
+                        : 'z.B. Haupthof, Bergfarm, ...')
+                    .setValue(currentName)
+                    .setStyle(TextInputStyle.Short)
+                    .setRequired(true)
+                    .setMaxLength(50)
+            )
+        );
+
+        await interaction.showModal(modal);
+    }
+
+    /**
+     * Handle Farm Rename Submit
+     */
+    async handleFarmRenameSubmit(interaction, idx, farmId, gcfg) {
+        const srv = gcfg.servers[idx];
+        const newName = interaction.fields.getTextInputValue('farm_name');
+
+        // Initialize farmNames if not exists
+        if (!srv.farmNames) {
+            srv.farmNames = {};
+        }
+
+        // Set new name
+        srv.farmNames[farmId] = newName;
+
+        // Save config
+        this.configManager.saveGuild(interaction.guildId, gcfg);
+
+        this.logger.success(`Farm ${farmId} renamed to "${newName}" on ${srv.serverName} by ${interaction.user.tag}`);
+
+        const title = this.messageHandler
+            ? this.messageHandler.get('setup.farmNames.success.title', {}, srv, gcfg)
+            : '✅ Farm umbenannt';
+
+        const description = this.messageHandler
+            ? this.messageHandler.get('setup.farmNames.success.description', { 
+                farmId, 
+                farmName: newName 
+              }, srv, gcfg)
+            : `**Farm ${farmId}** heißt jetzt:\n🏠 **${newName}**`;
+
+        await interaction.reply({
+            embeds: [new EmbedBuilder()
+                .setColor('#00FF00')
+                .setTitle(title)
+                .setDescription(description)],
+            ephemeral: true
+        });
+    }
+	
+	// ═══════════════════════════════════════════════════════════
+    // URL MANAGEMENT
+    // ═══════════════════════════════════════════════════════════
+
+    /**
+     * Show Basic Info Modal
+     */
+    async handleBasicInfoModal(interaction, idx, gcfg) {
+        const srv = gcfg.servers[idx];
+        
+        const serverName = (srv.serverName || '').substring(0, 45);
+        const statsUrl = (srv.stats_url || '').substring(0, 2000);
+        const careerUrl = (srv.career_url || srv.career_savegame_url || '').substring(0, 2000);
+
+        const modal = new ModalBuilder()
+            .setCustomId(`modal_basic_info_${idx}`)
+            .setTitle(`📝 ${serverName} - Basic Info`);
+
+        modal.addComponents(
+            new ActionRowBuilder().addComponents(
+                new TextInputBuilder()
+                    .setCustomId('server_name')
+                    .setLabel('Server Name')
+                    .setPlaceholder('Mein FS25 Server')
+                    .setValue(serverName)
+                    .setStyle(TextInputStyle.Short)
+                    .setRequired(true)
+            ),
+            new ActionRowBuilder().addComponents(
+                new TextInputBuilder()
+                    .setCustomId('stats_url')
+                    .setLabel('Stats URL (erforderlich)')
+                    .setPlaceholder('http://ip:8080/feed/dedicated-server-stats.xml')
+                    .setValue(statsUrl)
+                    .setStyle(TextInputStyle.Short)
+                    .setRequired(true)
+            ),
+            new ActionRowBuilder().addComponents(
+                new TextInputBuilder()
+                    .setCustomId('career_url')
+                    .setLabel('Career Savegame URL (optional)')
+                    .setPlaceholder('http://ip:8080/feed/...-savegame.html?code=...')
+                    .setValue(careerUrl)
+                    .setStyle(TextInputStyle.Short)
+                    .setRequired(false)
+            )
+        );
+
+        await interaction.showModal(modal);
+    }
+
+    /**
+     * Show Advanced URLs Modal
+     */
+    async handleAdvancedUrlsModal(interaction, idx, gcfg) {
+        const srv = gcfg.servers[idx];
+        
+        const modListUrl = (srv.mod_list_url || '').substring(0, 2000);
+        const vehiclesUrl = (srv.vehicles_url || '').substring(0, 2000);
+        const economyUrl = (srv.economy_url || '').substring(0, 2000);
+        const mapScreenshotUrl = (srv.map_screenshot_url || '').substring(0, 2000);
+
+        const modal = new ModalBuilder()
+            .setCustomId(`modal_advanced_urls_${idx}`)
+            .setTitle(`🔗 ${srv.serverName.substring(0, 30)} - URLs`);
+
+        modal.addComponents(
+            new ActionRowBuilder().addComponents(
+                new TextInputBuilder()
+                    .setCustomId('mod_list_url')
+                    .setLabel('Mod List URL (optional)')
+                    .setPlaceholder('http://ip:8080/mods.html')
+                    .setValue(modListUrl)
+                    .setStyle(TextInputStyle.Short)
+                    .setRequired(false)
+            ),
+            new ActionRowBuilder().addComponents(
+                new TextInputBuilder()
+                    .setCustomId('vehicles_url')
+                    .setLabel('Vehicles XML URL (optional)')
+                    .setPlaceholder('http://ip:8080/feed/vehicles.xml?code=...')
+                    .setValue(vehiclesUrl)
+                    .setStyle(TextInputStyle.Short)
+                    .setRequired(false)
+            ),
+            new ActionRowBuilder().addComponents(
+                new TextInputBuilder()
+                    .setCustomId('economy_url')
+                    .setLabel('Economy XML URL (optional)')
+                    .setPlaceholder('http://ip:8080/feed/economy.xml?code=...')
+                    .setValue(economyUrl)
+                    .setStyle(TextInputStyle.Short)
+                    .setRequired(false)
+            ),
+            new ActionRowBuilder().addComponents(
+                new TextInputBuilder()
+                    .setCustomId('map_screenshot_url')
+                    .setLabel('Map Screenshot URL (optional)')
+                    .setPlaceholder('https://i.imgur.com/xyz.png')
+                    .setValue(mapScreenshotUrl)
+                    .setStyle(TextInputStyle.Short)
+                    .setRequired(false)
+            )
+        );
+
+        await interaction.showModal(modal);
+    }
+
+    /**
+     * Handle Basic Info Modal Submit
+     */
+    async handleBasicInfoSubmit(interaction, idx, gcfg) {
+        const srv = gcfg.servers[idx];
+
+        srv.serverName = interaction.fields.getTextInputValue('server_name');
+        srv.stats_url = interaction.fields.getTextInputValue('stats_url');
+        srv.career_url = interaction.fields.getTextInputValue('career_url') || '';
+        
+        // Backward compatibility
+        srv.career_savegame_url = srv.career_url;
+
+        this.configManager.saveGuild(interaction.guildId, gcfg);
+        this.monitoringManager.startMonitoring(interaction.guildId);
+
+        this.logger.success(`Basic info updated for ${srv.serverName} by ${interaction.user.tag}`);
+
+        await interaction.reply({
+            embeds: [new EmbedBuilder()
+                .setColor('#00FF00')
+                .setTitle('✅ Server-Infos aktualisiert')
+                .setDescription(`**${srv.serverName}**`)
+                .addFields(
+                    { name: '🔗 Stats URL', value: `\`${srv.stats_url.substring(0, 80)}...\``, inline: false },
+                    { name: '💼 Career URL', value: srv.career_url ? `\`${srv.career_url.substring(0, 80)}...\`` : '➖ Nicht gesetzt', inline: false }
+                )],
+            ephemeral: true
+        });
+    }
+
+    /**
+     * Handle Advanced URLs Modal Submit
+     */
+    async handleAdvancedUrlsSubmit(interaction, idx, gcfg) {
+        const srv = gcfg.servers[idx];
+
+        srv.mod_list_url = interaction.fields.getTextInputValue('mod_list_url') || '';
+        srv.vehicles_url = interaction.fields.getTextInputValue('vehicles_url') || '';
+        srv.economy_url = interaction.fields.getTextInputValue('economy_url') || '';
+        srv.map_screenshot_url = interaction.fields.getTextInputValue('map_screenshot_url') || '';
+
+        this.configManager.saveGuild(interaction.guildId, gcfg);
+        this.monitoringManager.startMonitoring(interaction.guildId);
+
+        this.logger.success(`Advanced URLs updated for ${srv.serverName} by ${interaction.user.tag}`);
+
+        const fields = [];
+        if (srv.mod_list_url) fields.push({ name: '🔧 Mod List', value: `\`${srv.mod_list_url.substring(0, 80)}...\``, inline: false });
+        if (srv.vehicles_url) fields.push({ name: '🚜 Vehicles', value: `\`${srv.vehicles_url.substring(0, 80)}...\``, inline: false });
+        if (srv.economy_url) fields.push({ name: '💰 Economy', value: `\`${srv.economy_url.substring(0, 80)}...\``, inline: false });
+        if (srv.map_screenshot_url) fields.push({ name: '🗺️ Map Screenshot', value: `\`${srv.map_screenshot_url.substring(0, 80)}...\``, inline: false });
+
+        if (fields.length === 0) {
+            fields.push({ name: 'ℹ️ Info', value: 'Alle URLs entfernt', inline: false });
+        }
+
+        await interaction.reply({
+            embeds: [new EmbedBuilder()
+                .setColor('#00FF00')
+                .setTitle('✅ Erweiterte URLs aktualisiert')
+                .setDescription(`**${srv.serverName}**`)
+                .addFields(fields)],
+            ephemeral: true
+        });
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // VEHICLE MENU HANDLERS
+    // ═══════════════════════════════════════════════════════════
+
+    async handleVehicleMainMenu(interaction, gcfg) {
+        const value = interaction.values[0];
+        const userId = interaction.user.id;
+        const data = this.client.vehicleData.get(userId);
+
+        if (!data) {
+            return interaction.reply({
+                content: '❌ Session abgelaufen! Bitte `/vehicles` erneut ausführen.',
+                ephemeral: true
+            });
+        }
+
+        if (value === 'fleet_stats') {
+            const embed = this.vehicleMenus.createFleetStats(data.vehicles, gcfg);
+            await interaction.update({
+                embeds: [embed],
+                components: [this.vehicleMenus.createBackButton('main')]
+            });
+        } else if (value === 'top5') {
+            const embed = this.vehicleMenus.createTop5(data.vehicles, gcfg);
+            await interaction.update({
+                embeds: [embed],
+                components: [this.vehicleMenus.createBackButton('main')]
+            });
+        } else if (value === 'value_breakdown') {
+            const embed = this.vehicleMenus.createValueBreakdown(data.vehicles, gcfg);
+            await interaction.update({
+                embeds: [embed],
+                components: [this.vehicleMenus.createBackButton('main')]
+            });
+        } else if (value === 'farm_overview') {
+            const embed = this.vehicleMenus.createFarmDetails('0', data.vehicles, data.farmNames, gcfg);
+            const select = this.vehicleMenus.createFarmSelect(data.vehicles, data.farmNames, gcfg);
+            await interaction.update({
+                embeds: [embed],
+                components: [select]
+            });
+        }
+    }
+
+    async handleVehicleFarmSelect(interaction, gcfg) {
+        const value = interaction.values[0];
+        const userId = interaction.user.id;
+        const data = this.client.vehicleData.get(userId);
+
+        if (!data) {
+            return interaction.reply({
+                content: '❌ Session abgelaufen!',
+                ephemeral: true
+            });
+        }
+
+        if (value === 'back') {
+            const embed = this.vehicleMenus.createMainMenu(data.vehicles, gcfg);
+            const select = this.vehicleMenus.createMainMenuSelect(gcfg);
+            await interaction.update({
+                embeds: [embed],
+                components: [select]
+            });
+        } else {
+            const embed = this.vehicleMenus.createFarmDetails(value, data.vehicles, data.farmNames, gcfg);
+            const select = this.vehicleMenus.createFarmSelect(data.vehicles, data.farmNames, gcfg);
+            await interaction.update({
+                embeds: [embed],
+                components: [select]
+            });
+        }
+    }
+
+    async handleVehicleBack(interaction, gcfg) {
+        const userId = interaction.user.id;
+        const data = this.client.vehicleData.get(userId);
+
+        if (!data) {
+            return interaction.reply({
+                content: '❌ Session abgelaufen!',
+                ephemeral: true
+            });
+        }
+
+        const embed = this.vehicleMenus.createMainMenu(data.vehicles, gcfg);
+        const select = this.vehicleMenus.createMainMenuSelect(gcfg);
+        await interaction.update({
+            embeds: [embed],
+            components: [select]
+        });
     }
 }
 
