@@ -213,6 +213,7 @@ class StatusChecker {
     /**
      * Parse Vehicles XML - Enhanced for detailed vehicle info
      */
+	 
     static parseVehiclesXml(xml) {
         try {
             const result = {
@@ -220,8 +221,8 @@ class StatusChecker {
                 totalValue: 0,
                 totalOperatingHours: 0,
                 farms: {},
-                vehicles: [], // NEW: List of all vehicles with details
-                categories: {} // NEW: Count by category
+                vehicles: [],
+                categories: {}
             };
 
             console.log('=== PARSING VEHICLES XML ===');
@@ -240,23 +241,56 @@ class StatusChecker {
                 const price = parseFloat(this.extractAttribute(attrs, 'price')) || 0;
                 const operatingTime = parseFloat(this.extractAttribute(attrs, 'operatingTime')) || 0;
                 
-                // Extract configFileName from content (e.g. "FS25_fendt/fendt1050.xml")
-                const configMatch = content.match(/configFileName="([^"]+)"/);
+                // ═══════════════════════════════════════════════════════════
+                // IMPROVED: Try multiple methods to extract vehicle name
+                // ═══════════════════════════════════════════════════════════
                 let vehicleName = 'Unknown';
                 let category = 'other';
+                let configPath = null;
                 
-                if (configMatch) {
-                    const configPath = configMatch[1];
-                    // Extract filename: "FS25_fendt/fendt1050.xml" -> "fendt1050"
-                    const filenameParts = configPath.split('/');
-                    const filename = filenameParts[filenameParts.length - 1].replace('.xml', '');
-                    vehicleName = this.formatVehicleName(filename);
-                    
-                    // Determine category from path
-                    category = this.determineVehicleCategory(configPath);
+                // METHOD 1: Try configFileName attribute in vehicle tag
+                configPath = this.extractAttribute(attrs, 'configFileName');
+                
+                // METHOD 2: Try configFileName in content
+                if (!configPath) {
+                    const configMatch = content.match(/configFileName="([^"]+)"/);
+                    if (configMatch) {
+                        configPath = configMatch[1];
+                    }
                 }
                 
-                // Extract age from propertyState (optional - for future)
+                // METHOD 3: Try filename attribute
+                if (!configPath) {
+                    configPath = this.extractAttribute(attrs, 'filename');
+                }
+                
+                // METHOD 4: Try any XML path pattern
+                if (!configPath) {
+                    const pathMatch = content.match(/\b([A-Za-z0-9_]+\/[A-Za-z0-9_]+\.xml)\b/);
+                    if (pathMatch) {
+                        configPath = pathMatch[1];
+                    }
+                }
+                
+                // Parse the config path if we found one
+                if (configPath) {
+                    // Extract filename: "FS25_fendt/fendt1050.xml" -> "fendt1050"
+                    // Also handles: "data/vehicles/wheeled/fendt/1050/1050.xml"
+                    const parts = configPath.split('/');
+                    const xmlFile = parts[parts.length - 1]; // Last part
+                    const filename = xmlFile.replace('.xml', '');
+                    
+                    vehicleName = this.formatVehicleName(filename);
+                    category = this.determineVehicleCategory(configPath);
+                    
+                    console.log(`  Vehicle #${vehicleCount}: ${filename} -> ${vehicleName} (${category})`);
+                } else {
+                    console.log(`  Vehicle #${vehicleCount}: NO CONFIG PATH FOUND`);
+                    console.log(`    Attrs: ${attrs.substring(0, 100)}...`);
+                    console.log(`    Content: ${content.substring(0, 100)}...`);
+                }
+                
+                // Extract age from propertyState (optional)
                 const ageMatch = content.match(/<propertyState\s+age="([^"]+)"/);
                 const age = ageMatch ? parseFloat(ageMatch[1]) : 0;
 
@@ -307,6 +341,7 @@ class StatusChecker {
 
         } catch (e) {
             console.error('Vehicles XML Parse Error:', e);
+            console.error('Stack:', e.stack);
             return { total: 0, totalValue: 0, farms: {}, vehicles: [], categories: {} };
         }
     }
@@ -315,9 +350,15 @@ class StatusChecker {
      * Format vehicle name from filename
      * e.g. "fendt1050" -> "Fendt 1050"
      */
-    static formatVehicleName(filename) {
+    
+	static formatVehicleName(filename) {
+        if (!filename) return 'Unknown';
+        
         // Remove common prefixes
-        let name = filename.replace(/^(lizard_|placeable_|pd_)/i, '');
+        let name = filename.replace(/^(lizard_|placeable_|pd_|FS\d+_)/i, '');
+        
+        // Remove common suffixes
+        name = name.replace(/(_\d+)$/i, '');
         
         // Split on underscores and capitals
         name = name.replace(/_/g, ' ');
@@ -329,23 +370,33 @@ class StatusChecker {
             return word.charAt(0).toUpperCase() + word.slice(1);
         }).join(' ');
         
-        return name;
+        return name || 'Unknown';
     }
 
     /**
      * Determine vehicle category from config path
      */
-    static determineVehicleCategory(configPath) {
+    
+	static determineVehicleCategory(configPath) {
+        if (!configPath) return 'other';
+        
         const path = configPath.toLowerCase();
         
+        // Check path for category indicators
         if (path.includes('tractor')) return 'tractors';
         if (path.includes('harvester') || path.includes('combine')) return 'harvesters';
-        if (path.includes('truck') || path.includes('semitrailer')) return 'trucks';
-        if (path.includes('trailer')) return 'trailers';
-        if (path.includes('cultivator') || path.includes('plow') || path.includes('seeder')) return 'cultivation';
-        if (path.includes('sprayer') || path.includes('spreader')) return 'spraying';
-        if (path.includes('baler') || path.includes('wrapper') || path.includes('mower')) return 'forage';
-        if (path.includes('loader') || path.includes('telehandler')) return 'loading';
+        if (path.includes('truck') || path.includes('/vehicles/wheeled/man/') || 
+            path.includes('/vehicles/wheeled/lizard/')) return 'trucks';
+        if (path.includes('trailer') || path.includes('semitrailer')) return 'trailers';
+        if (path.includes('cultivator') || path.includes('plow') || 
+            path.includes('seeder') || path.includes('planter')) return 'cultivation';
+        if (path.includes('sprayer') || path.includes('spreader') || 
+            path.includes('fertilizer')) return 'spraying';
+        if (path.includes('baler') || path.includes('wrapper') || 
+            path.includes('mower') || path.includes('tedder') || 
+            path.includes('windrower')) return 'forage';
+        if (path.includes('loader') || path.includes('telehandler') || 
+            path.includes('frontloader')) return 'loading';
         
         return 'other';
     }
