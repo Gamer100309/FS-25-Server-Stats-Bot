@@ -1,6 +1,7 @@
 // ═══════════════════════════════════════════════════════════
 //  VEHICLE MENUS MODULE
 //  Enhanced vehicle management system for FS Status Bot
+//  v1.1 - Farm 0 filtering added
 // ═══════════════════════════════════════════════════════════
 
 const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
@@ -18,9 +19,27 @@ class VehicleMenus {
     }
 
     /**
+     * Filter out Farm 0 (map assets) from farm list
+     * Farm 0 = Locomotive, Wagons, etc. - not visible in game
+     */
+    filterFarm0(vehicleData) {
+        const filtered = { ...vehicleData };
+        
+        // Remove Farm 0 from farms object
+        if (filtered.farms && filtered.farms['0']) {
+            delete filtered.farms['0'];
+        }
+        
+        return filtered;
+    }
+
+    /**
      * Main Menu - Entry point for /vehicles command
      */
     createMainMenu(vehicleData, gcfg = null) {
+        // Filter out Farm 0
+        const filtered = this.filterFarm0(vehicleData);
+        
         const embed = new EmbedBuilder()
             .setColor('#FF8C00')
             .setTitle('🚜 VEHICLE MANAGEMENT')
@@ -28,7 +47,7 @@ class VehicleMenus {
             .addFields(
                 {
                     name: '📊 Fleet Overview',
-                    value: `Total Vehicles: **${vehicleData.total}**\nTotal Value: **€${vehicleData.totalValue.toLocaleString()}**`,
+                    value: `Total Vehicles: **${filtered.total}**\nTotal Value: **€${filtered.totalValue.toLocaleString()}**`,
                     inline: false
                 }
             );
@@ -75,8 +94,10 @@ class VehicleMenus {
      * Fleet Statistics
      */
     createFleetStats(vehicleData, gcfg = null) {
-        const avgValue = vehicleData.total > 0 ? Math.round(vehicleData.totalValue / vehicleData.total) : 0;
-        const avgHours = vehicleData.total > 0 ? Math.round(vehicleData.totalOperatingHours / vehicleData.total) : 0;
+        const filtered = this.filterFarm0(vehicleData);
+        
+        const avgValue = filtered.total > 0 ? Math.round(filtered.totalValue / filtered.total) : 0;
+        const avgHours = filtered.total > 0 ? Math.round(filtered.totalOperatingHours / filtered.total) : 0;
 
         const embed = new EmbedBuilder()
             .setColor('#00FF00')
@@ -84,7 +105,7 @@ class VehicleMenus {
             .addFields(
                 {
                     name: '🚜 Overview',
-                    value: `Total Vehicles: **${vehicleData.total}**\nTotal Value: **€${vehicleData.totalValue.toLocaleString()}**\nOperating Hours: **${Math.round(vehicleData.totalOperatingHours)}h**`,
+                    value: `Total Vehicles: **${filtered.total}**\nTotal Value: **€${filtered.totalValue.toLocaleString()}**\nOperating Hours: **${Math.round(filtered.totalOperatingHours)}h**`,
                     inline: false
                 },
                 {
@@ -95,8 +116,8 @@ class VehicleMenus {
             );
 
         // Add category breakdown
-        if (Object.keys(vehicleData.categories).length > 0) {
-            const categoryList = Object.entries(vehicleData.categories)
+        if (Object.keys(filtered.categories).length > 0) {
+            const categoryList = Object.entries(filtered.categories)
                 .sort(([,a], [,b]) => b - a)
                 .map(([cat, count]) => {
                     const icon = this.getCategoryIcon(cat);
@@ -186,7 +207,7 @@ class VehicleMenus {
     }
 
     /**
-     * Farm Overview
+     * Farm Overview - FARM 0 FILTERED
      */
     createFarmOverview(vehicleData, farmNames, gcfg = null) {
         const embed = new EmbedBuilder()
@@ -194,31 +215,37 @@ class VehicleMenus {
             .setTitle('🏠 FARM OVERVIEW')
             .setDescription('Vehicles distributed across your farms:');
 
-        Object.entries(vehicleData.farms).forEach(([farmId, farm]) => {
-            const farmName = farmNames[farmId] || `Farm ${farmId}`;
-            embed.addFields({
-                name: `🏠 ${farmName}`,
-                value: `🚜 Vehicles: ${farm.count}\n💰 Value: €${farm.totalValue.toLocaleString()}\n⏱️ Hours: ${Math.round(farm.totalOperatingHours)}h`,
-                inline: true
+        // ⭐ FILTER OUT FARM 0
+        Object.entries(vehicleData.farms)
+            .filter(([farmId]) => farmId !== '0') // ← HIER!
+            .forEach(([farmId, farm]) => {
+                const farmName = farmNames[farmId] || `Farm ${farmId}`;
+                embed.addFields({
+                    name: `🏠 ${farmName}`,
+                    value: `🚜 Vehicles: ${farm.count}\n💰 Value: €${farm.totalValue.toLocaleString()}\n⏱️ Hours: ${Math.round(farm.totalOperatingHours)}h`,
+                    inline: true
+                });
             });
-        });
 
         return embed;
     }
 
     /**
-     * Farm Selection Menu
+     * Farm Selection Menu - FARM 0 FILTERED
      */
     createFarmSelect(vehicleData, farmNames, gcfg = null) {
-        const options = Object.entries(vehicleData.farms).map(([farmId, farm]) => {
-            const farmName = farmNames[farmId] || `Farm ${farmId}`;
-            return {
-                label: farmName,
-                description: `${farm.count} vehicles - €${farm.totalValue.toLocaleString()}`,
-                value: farmId,
-                emoji: '🏠'
-            };
-        });
+        // ⭐ FILTER OUT FARM 0
+        const options = Object.entries(vehicleData.farms)
+            .filter(([farmId]) => farmId !== '0') // ← HIER!
+            .map(([farmId, farm]) => {
+                const farmName = farmNames[farmId] || `Farm ${farmId}`;
+                return {
+                    label: farmName,
+                    description: `${farm.count} vehicles - €${farm.totalValue.toLocaleString()}`,
+                    value: farmId,
+                    emoji: '🏠'
+                };
+            });
 
         options.push({
             label: '← Back to Main Menu',
