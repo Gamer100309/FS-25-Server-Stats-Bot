@@ -28,10 +28,10 @@ class MonitoringManager {
             const gcfg = this.configManager.loadGuild(guildId);
             const stateMgr = new StateManager(guildId);
 
-            const data = await StatusChecker.getStatus(srv);
+            const data = await StatusChecker.getStatus(srv, null, this.logger);
             
             // PHASE 1: messageHandler übergeben für mehrsprachige Embeds
-            const embed = StatusEmbedBuilder.createEmbed(data, srv, gcfg, this.messageHandler);
+            const embed = StatusEmbedBuilder.createEmbed(data, srv, gcfg, this.messageHandler, this.logger);
             const buttons = StatusEmbedBuilder.createButtons(srv, gcfg, this.messageHandler);
 
             const msgOpts = { embeds: [embed], components: buttons ? [buttons] : [] };
