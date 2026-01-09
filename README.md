@@ -96,7 +96,7 @@ Based on [MC Server Status Bot v5.1.2](https://github.com/Gamer100309/MC-Server-
 
 \- Node.js 16.0.0 or higher
 
-\- A Discord Bot Token (\[Guide](https://discordjs.guide/preparations/setting-up-a-bot-application.html))
+\- A Discord Bot Token [Guide](https://github.com/Gamer100309/MC-Server-Status-Bot/wiki/Discord%E2%80%90Bot%E2%80%90Setup)
 
 \- A Farming Simulator dedicated server to monitor
 
@@ -217,6 +217,8 @@ This bot uses \*\*GameDig\*\* to query Farming Simulator servers.
 
 
 \### Supported Versions
+
+\- Farming Simulator 25 (FS25)
 
 \- Farming Simulator 22 (FS22)
 
