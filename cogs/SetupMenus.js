@@ -517,9 +517,7 @@ class SetupMenus {
     }
 
     // ═══════════════════════════════════════════════════════════
-	//  SETUP MENUS - EMBED DESIGN OPTIONS (OHNE ICON)
-	//  SUCHE in SetupMenus.js nach: createEmbedOptionsMenu
-	//  ERSETZE die komplette Methode
+	//  SETUP MENUS - EMBED DESIGN OPTIONS
 	// ═══════════════════════════════════════════════════════════
 
 	createEmbedOptionsMenu(serverIdx, gcfg = null) {
@@ -541,7 +539,12 @@ class SetupMenus {
 							value: 'fields', 
 							emoji: this.getText('setup.embedDesign.designOptions.fields.emoji', {}, gcfg)
 						},
-						// ⭐ ICON OPTION ENTFERNT - FS Server haben keine Icons!
+						{ 
+                            label: 'Password Einstellungen', 
+                            description: 'Feld zeigen, Spoiler aktivieren', 
+                            value: 'password', 
+                            emoji: '🔒'
+                        },
 						{ 
 							label: this.getText('setup.common.back', {}, gcfg), 
 							value: 'back', 
