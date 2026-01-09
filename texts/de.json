@@ -152,6 +152,10 @@
           "modListUrl": {
             "label": "Mod List URL (optional)",
             "placeholder": "http://server:8080/mods.html"
+          },
+          "password": {
+            "label": "Server Passwort (optional)",
+            "placeholder": "GeheimesPasswort123"
           }
         },
         "channelSelect": {
@@ -266,13 +270,45 @@
       },
       "fields": {
         "title": "🎨 {serverName} - Felder",
-        "description": "Welches Feld möchtest du ein-/ausblenden?",
+        "description": "Welche Felder möchtest du ein-/ausblenden?",
+        "selectDescription": "Wähle ein Feld oder schalte alle auf einmal um:",
         "placeholder": "👁️ Feld ein-/ausblenden...",
+        "stats": "📊 Statistik",
+        "statsValue": "✅ Sichtbar: {visible}\n❌ Versteckt: {hidden}\n📋 Gesamt: {total}",
+        "separator": "Einzelne Felder:",
+        "separatorSelected": {
+          "title": "ℹ️ Nur ein Trenner",
+          "description": "Das ist nur ein optischer Trenner.\n\nBitte wähle ein Feld oder eine der Aktionen darüber."
+        },
+        "allOn": {
+          "label": "Alle anzeigen",
+          "description": "Alle Felder einblenden",
+          "emoji": "✅",
+          "success": {
+            "title": "✅ Alle Felder aktiviert",
+            "description": "**{serverName}**\n\n**{count} Felder** werden jetzt angezeigt!"
+          }
+        },
+        "allOff": {
+          "label": "Alle verstecken",
+          "description": "Alle Felder ausblenden",
+          "emoji": "❌",
+          "success": {
+            "title": "❌ Alle Felder deaktiviert",
+            "description": "**{serverName}**\n\n**{count} Felder** wurden ausgeblendet!"
+          }
+        },
         "map": {
           "label": "Map-Anzeige",
           "visible": "✅ Sichtbar",
           "hidden": "❌ Versteckt",
           "emoji": "🗺️"
+        },
+        "version": {
+          "label": "Version",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "⚙️"
         },
         "password": {
           "label": "Passwort-Anzeige",
@@ -281,16 +317,28 @@
           "emoji": "🔒"
         },
         "players": {
-          "label": "Spielerliste",
+          "label": "Spieler-Zähler",
           "visible": "✅ Sichtbar",
           "hidden": "❌ Versteckt",
           "emoji": "👥"
+        },
+        "playerList": {
+          "label": "Spielerliste",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "👤"
         },
         "mods": {
           "label": "Mod-Anzahl",
           "visible": "✅ Sichtbar",
           "hidden": "❌ Versteckt",
           "emoji": "🔧"
+        },
+        "vehicles": {
+          "label": "Fahrzeug-Anzahl",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "🚜"
         },
         "money": {
           "label": "Kontostand",
@@ -303,6 +351,155 @@
           "visible": "✅ Sichtbar",
           "hidden": "❌ Versteckt",
           "emoji": "⚡"
+        },
+        "timeScale": {
+          "label": "Zeitskala",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "⏱️"
+        },
+        "greatDemands": {
+          "label": "Aktive Nachfragen",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "🔥"
+        },
+        "playTime": {
+          "label": "Spielzeit",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "🕐"
+        },
+        "currentDate": {
+          "label": "Aktuelles Datum",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "📅"
+        },
+        "saveDate": {
+          "label": "Zuletzt gespeichert",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "💾"
+        },
+        "growthRate": {
+          "label": "Wachstumsrate",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "🌱"
+        },
+        "fieldJobs": {
+          "label": "Feldaufträge",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "📋"
+        },
+        "autoSave": {
+          "label": "Auto-Speichern",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "💾"
+        },
+        "resetVehicles": {
+          "label": "Fahrzeuge zurücksetzen",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "🔄"
+        },
+        "savegameName": {
+          "label": "Spielstand-Name",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "📝"
+        },
+        "creationDate": {
+          "label": "Erstellungsdatum",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "🛠️"
+        },
+        "traffic": {
+          "label": "Verkehr",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "🚦"
+        },
+        "weeds": {
+          "label": "Unkraut",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "🌱"
+        },
+        "fruitDestruction": {
+          "label": "Fruchtzerstörung",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "🌾"
+        },
+        "snow": {
+          "label": "Schnee",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "❄️"
+        },
+        "stones": {
+          "label": "Steine",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "🪨"
+        },
+        "fuelUsage": {
+          "label": "Spritverbrauch",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "⛽"
+        },
+        "loan": {
+          "label": "Kredit",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "🏦"
+        },
+        "initialMoney": {
+          "label": "Startkapital",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "💼"
+        },
+        "helperFuel": {
+          "label": "Helfer kauft Sprit",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "🛢️"
+        },
+        "helperSeeds": {
+          "label": "Helfer kauft Saatgut",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "🌾"
+        },
+        "helperFertilizer": {
+          "label": "Helfer kauft Dünger",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "💊"
+        },
+        "mapScreenshot": {
+          "label": "Karten-Vorschaubild",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "🖼️"
+        },
+        "passwordField": {
+          "label": "Passwort-Feld",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "🔒"
+        },
+        "toggled": {
+          "title": "✅ Feld umgeschaltet",
+          "shown": "**{fieldName}** wird jetzt **angezeigt**",
+          "hidden": "**{fieldName}** wird jetzt **ausgeblendet**"
         },
         "success": {
           "title": "✅ Feld-Einstellungen aktualisiert",
@@ -534,11 +731,53 @@
         "difficulty": "{emoji} Schwierigkeit",
         "timeScale": "{emoji} Zeitskala",
         "playerList": "{emoji} Online Spieler",
-        "greatDemands": "{emoji} Aktive Nachfrage"
+        "greatDemands": "{emoji} Aktive Nachfrage",
+        "playTime": "{emoji} Spielzeit",
+        "currentDate": "{emoji} Aktuelles Datum",
+        "saveDate": "{emoji} Zuletzt gespeichert",
+        "growthRate": "{emoji} Wachstumsrate",
+        "fieldJobs": "{emoji} Feldaufträge",
+        "autoSave": "{emoji} Auto-Speichern",
+        "resetVehicles": "{emoji} Fahrzeuge zurücksetzen",
+        "savegameName": "{emoji} Spielstand",
+        "creationDate": "{emoji} Erstellt am",
+        "traffic": "{emoji} Verkehr",
+        "weeds": "{emoji} Unkraut",
+        "fruitDestruction": "{emoji} Fruchtzerstörung",
+        "snow": "{emoji} Schnee",
+        "stones": "{emoji} Steine",
+        "fuelUsage": "{emoji} Spritverbrauch",
+        "loan": "{emoji} Kredit",
+        "initialMoney": "{emoji} Startkapital",
+        "helperFuel": "{emoji} Helfer kauft Sprit",
+        "helperSeeds": "{emoji} Helfer kauft Saatgut",
+        "helperFertilizer": "{emoji} Helfer kauft Dünger"
       },
       "noPlayers": "➖ Niemand online",
       "passwordYes": "🔒 Ja",
-      "passwordNo": "🔓 Nein"
+      "passwordNo": "🔓 Nein",
+      "fieldJobsOn": "✅ Aktiviert",
+      "fieldJobsOff": "❌ Deaktiviert",
+      "autoSaveOn": "✅ Ein",
+      "autoSaveOff": "❌ Aus",
+      "resetVehiclesOn": "✅ Ein",
+      "resetVehiclesOff": "❌ Aus",
+      "trafficOn": "✅ Ein",
+      "trafficOff": "❌ Aus",
+      "weedsOn": "✅ Ein",
+      "weedsOff": "❌ Aus",
+      "fruitDestructionOn": "✅ Ein",
+      "fruitDestructionOff": "❌ Aus",
+      "snowOn": "✅ Ein",
+      "snowOff": "❌ Aus",
+      "stonesOn": "✅ Ein",
+      "stonesOff": "❌ Aus",
+      "helperFuelOn": "✅ Ja",
+      "helperFuelOff": "❌ Nein",
+      "helperSeedsOn": "✅ Ja",
+      "helperSeedsOff": "❌ Nein",
+      "helperFertilizerOn": "✅ Ja",
+      "helperFertilizerOff": "❌ Nein"
     },
     "offline": {
       "title": "{emoji} {serverName} Offline",
