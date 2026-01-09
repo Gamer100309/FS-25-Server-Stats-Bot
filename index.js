@@ -20,12 +20,17 @@ const { VehicleMenus } = require('./cogs/VehicleMenus');
 // ═══════════════════════════════════════════════════════════
 
 const configManager = new ConfigManager();
-const logger = new Logger('./logs', configManager.globalConfig.verboseLogging);
+const logger = new Logger(
+    './logs', 
+    configManager.globalConfig.verboseLogging,
+    configManager.globalConfig.debugLogging
+);
 const messageHandler = new MessageHandler();
 
 logger.info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 logger.info('   🚜 FS STATUS BOT v1.0 - MULTI-GUILD');
 logger.info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+logger.logConfig();
 
 const client = new Client({
     intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages]
