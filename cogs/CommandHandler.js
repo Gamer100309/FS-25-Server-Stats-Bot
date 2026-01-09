@@ -346,7 +346,7 @@ class CommandHandler {
     async handleVehiclesCommand(interaction, gcfg) {
         try {
             // Defer reply since fetching data might take a moment
-            await interaction.deferReply({ ephemeral: true });
+            await interaction.deferReply({ ephemeral: false });
 
             // Find the server config for this guild
             if (gcfg.servers.length === 0) {
@@ -367,23 +367,6 @@ class CommandHandler {
                     content: '❌ Server is offline or vehicle data unavailable!'
                 });
                 return;
-            }
-
-            // ═══════════════════════════════════════════════════════════
-            // AUTO-DETECT FARMS: Initialize farmNames if not exists
-            // ═══════════════════════════════════════════════════════════
-            if (!srv.farmNames || Object.keys(srv.farmNames).length === 0) {
-                srv.farmNames = {};
-                
-                // Extract all farm IDs from vehicles data
-                Object.keys(data.vehicles.farms).forEach(farmId => {
-                    srv.farmNames[farmId] = `Farm ${farmId}`;
-                });
-
-                // Save config
-                this.configManager.saveGuild(interaction.guildId, gcfg);
-                
-                this.logger.info(`Auto-detected ${Object.keys(srv.farmNames).length} farms for ${srv.serverName}`);
             }
 
             // Get farm names from config
