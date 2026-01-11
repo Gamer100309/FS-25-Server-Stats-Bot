@@ -36,11 +36,18 @@ class ConfigManager {
     }
 
     loadGlobal() {
-        try {
-            if (fs.existsSync('./global-config.json')) {
-                return JSON.parse(fs.readFileSync('./global-config.json', 'utf8'));
-            }
-        } catch (e) {}
+		try {
+			if (fs.existsSync('./global-config.json')) {
+				const content = fs.readFileSync('./global-config.json', 'utf8');
+				return JSON.parse(content);
+			}
+		} catch (e) {
+			// ✅ FEHLER LOGGEN STATT IGNORIEREN!
+			console.error('❌ ERROR: global-config.json is invalid!');
+			console.error(`Error: ${e.message}`);
+			console.error('Please fix the JSON syntax or delete the file to regenerate.');
+			process.exit(1);  // ← STOPPEN statt überschreiben!
+		}
         
         const def = {
             token: "DEIN_BOT_TOKEN",
