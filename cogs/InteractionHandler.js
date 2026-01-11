@@ -116,70 +116,73 @@ class InteractionHandler {
 	//  EMBED FIELDS HANDLER - FS FELDER (Map, Password, Players, Mods)
 	// ═══════════════════════════════════════════════════════════
 
-	async handleEmbedFields(interaction, idx, gcfg) {
+	async handleEmbedFields(interaction, idx, gcfg, page = 1) {
 		const srv = gcfg.servers[idx];
 		if (!srv.embedSettings) srv.embedSettings = {};
 		const s = srv.embedSettings;
 
 		// ═══════════════════════════════════════════════════════════
-		// LISTE ALLER FELDER MIT STATUS
+		// ALLE FELDER DEFINIEREN
 		// ═══════════════════════════════════════════════════════════
 		
-		const fields = [
-            // BASIC FIELDS (11)
-            { key: 'showMap', name: 'map' },
-            { key: 'showVersion', name: 'version' },
-            { key: 'showPasswordField', name: 'passwordField' },
-            { key: 'showPlayers', name: 'players' },
-            { key: 'showPlayerList', name: 'playerList' },
-            { key: 'showMods', name: 'mods' },
-            { key: 'showVehicles', name: 'vehicles' },
-            { key: 'showMoney', name: 'money' },
-            { key: 'showDifficulty', name: 'difficulty' },
-            { key: 'showTimeScale', name: 'timeScale' },
-            { key: 'showGreatDemands', name: 'greatDemands' },
-            
-            // TIME & DATE FIELDS (4)
-            { key: 'showPlayTime', name: 'playTime' },
-            { key: 'showCurrentDate', name: 'currentDate' },
-            { key: 'showSaveDate', name: 'saveDate' },
-            { key: 'showCreationDate', name: 'creationDate' },
-            
-            // GAMEPLAY SETTINGS (10)
-            { key: 'showGrowthRate', name: 'growthRate' },
-            { key: 'showFieldJobs', name: 'fieldJobs' },
-            { key: 'showAutoSave', name: 'autoSave' },
-            { key: 'showResetVehicles', name: 'resetVehicles' },
-            { key: 'showTraffic', name: 'traffic' },
-            { key: 'showWeeds', name: 'weeds' },
-            { key: 'showFruitDestruction', name: 'fruitDestruction' },
-            { key: 'showSnow', name: 'snow' },
-            { key: 'showStones', name: 'stones' },
-            { key: 'showFuelUsage', name: 'fuelUsage' },
-            
-            // FINANCIAL FIELDS (2)
-            { key: 'showLoan', name: 'loan' },
-            { key: 'showInitialMoney', name: 'initialMoney' },
-            
-            // HELPER SETTINGS (3)
-            { key: 'showHelperFuel', name: 'helperFuel' },
-            { key: 'showHelperSeeds', name: 'helperSeeds' },
-            { key: 'showHelperFertilizer', name: 'helperFertilizer' },
-            
-            // SAVEGAME INFO (2)
-            { key: 'showSavegameName', name: 'savegameName' },
-            { key: 'showMapScreenshot', name: 'mapScreenshot' }
-            
-            // NOTE: revealPasswordText is handled separately in password menu
-        ];
+		const allFields = [
+			// BASIC FIELDS (16)
+			{ key: 'showMap', name: 'map' },
+			{ key: 'showVersion', name: 'version' },
+			{ key: 'showPasswordField', name: 'passwordField' },
+			{ key: 'showPlayers', name: 'players' },
+			{ key: 'showPlayerList', name: 'playerList' },
+			{ key: 'showMods', name: 'mods' },
+			{ key: 'showModList', name: 'modList' },
+			{ key: 'showVehicles', name: 'vehicles' },
+			{ key: 'showMoney', name: 'money' },
+			{ key: 'showDifficulty', name: 'difficulty' },
+			{ key: 'showTimeScale', name: 'timeScale' },
+			{ key: 'showGreatDemands', name: 'greatDemands' },
+			{ key: 'showPlayTime', name: 'playTime' },
+			{ key: 'showCurrentDate', name: 'currentDate' },
+			{ key: 'showSaveDate', name: 'saveDate' },
+			{ key: 'showCreationDate', name: 'creationDate' },
+			{ key: 'showGrowthRate', name: 'growthRate' },
+			{ key: 'showInitialLoan', name: 'initialLoan' },
+			
+			// ADVANCED FIELDS (16)
+			{ key: 'showFieldJobs', name: 'fieldJobs' },
+			{ key: 'showAutoSave', name: 'autoSave' },
+			{ key: 'showResetVehicles', name: 'resetVehicles' },
+			{ key: 'showTraffic', name: 'traffic' },
+			{ key: 'showWeeds', name: 'weeds' },
+			{ key: 'showFruitDestruction', name: 'fruitDestruction' },
+			{ key: 'showSnow', name: 'snow' },
+			{ key: 'showStones', name: 'stones' },
+			{ key: 'showFuelUsage', name: 'fuelUsage' },
+			{ key: 'showLoan', name: 'loan' },
+			{ key: 'showInitialMoney', name: 'initialMoney' },
+			{ key: 'showHelperFuel', name: 'helperFuel' },
+			{ key: 'showHelperSeeds', name: 'helperSeeds' },
+			{ key: 'showHelperFertilizer', name: 'helperFertilizer' },
+			{ key: 'showSavegameName', name: 'savegameName' },
+			{ key: 'showMapScreenshot', name: 'mapScreenshot' }
+		];
 
 		// ═══════════════════════════════════════════════════════════
-		// ZÄHLE SICHTBARE/VERSTECKTE FELDER
+		// PAGINATION
 		// ═══════════════════════════════════════════════════════════
+		
+		const fieldsPerPage = 12;
+		const startIdx = (page - 1) * fieldsPerPage;
+		const endIdx = startIdx + fieldsPerPage;
+		const fields = allFields.slice(startIdx, endIdx);
+		const totalPages = Math.ceil(allFields.length / fieldsPerPage);
+
+		// ═══════════════════════════════════════════════════════════
+		// STATISTIK FÜR ALLE FELDER (nicht nur aktuelle Seite)
+		// ═══════════════════════════════════════════════════════════
+		
 		let visibleCount = 0;
 		let hiddenCount = 0;
 
-		fields.forEach(field => {
+		allFields.forEach(field => {
 			if (s[field.key] !== false) {
 				visibleCount++;
 			} else {
@@ -187,31 +190,32 @@ class InteractionHandler {
 			}
 		});
 
-		const allVisible = visibleCount === fields.length;
-		const allHidden = hiddenCount === fields.length;
+		const allVisible = visibleCount === allFields.length;
+		const allHidden = hiddenCount === allFields.length;
 
 		// ═══════════════════════════════════════════════════════════
 		// EMBED MIT STATISTIK
 		// ═══════════════════════════════════════════════════════════
+		
 		const title = this.messageHandler
 			? this.messageHandler.get('setup.embedDesign.fields.title', { serverName: srv.serverName }, srv, gcfg)
-			: `🎨 ${srv.serverName} - Felder`;
+			: `🎨 ${srv.serverName} - Fields (Page ${page}/${totalPages})`;
 		
 		const description = this.messageHandler
 			? this.messageHandler.get('setup.embedDesign.fields.selectDescription', {}, srv, gcfg)
-			: 'Wähle ein Feld oder schalte alle auf einmal um:';
+			: 'Choose a field or toggle all at once:';
 		
 		const statsLabel = this.messageHandler
 			? this.messageHandler.get('setup.embedDesign.fields.stats', {}, srv, gcfg)
-			: '📊 Statistik';
+			: '📊 Statistics';
 		
 		const statsValue = this.messageHandler
 			? this.messageHandler.get('setup.embedDesign.fields.statsValue', {
 				visible: visibleCount,
 				hidden: hiddenCount,
-				total: fields.length
+				total: allFields.length
 			  }, srv, gcfg)
-			: `✅ Sichtbar: ${visibleCount}\n❌ Versteckt: ${hiddenCount}\n📋 Gesamt: ${fields.length}`;
+			: `✅ Visible: ${visibleCount}\n❌ Hidden: ${hiddenCount}\n📋 Total: ${allFields.length}\n📄 Page: ${page}/${totalPages}`;
 
 		const embed = new EmbedBuilder()
 			.setColor('#FF69B4')
@@ -226,6 +230,7 @@ class InteractionHandler {
 		// ═══════════════════════════════════════════════════════════
 		// DROPDOWN-MENÜ ERSTELLEN
 		// ═══════════════════════════════════════════════════════════
+		
 		const options = [];
 
 		// ALLE ANZEIGEN - nur wenn nicht alle schon sichtbar sind
@@ -233,10 +238,10 @@ class InteractionHandler {
 			options.push({
 				label: this.messageHandler
 					? this.messageHandler.get('setup.embedDesign.fields.allOn.label', {}, srv, gcfg)
-					: 'Alle anzeigen',
+					: 'Show All Fields',
 				description: this.messageHandler
 					? this.messageHandler.get('setup.embedDesign.fields.allOn.description', {}, srv, gcfg)
-					: 'Alle Felder einblenden',
+					: 'Make all fields visible',
 				value: 'all_on',
 				emoji: this.messageHandler
 					? this.messageHandler.get('setup.embedDesign.fields.allOn.emoji', {}, srv, gcfg)
@@ -249,10 +254,10 @@ class InteractionHandler {
 			options.push({
 				label: this.messageHandler
 					? this.messageHandler.get('setup.embedDesign.fields.allOff.label', {}, srv, gcfg)
-					: 'Alle verstecken',
+					: 'Hide All Fields',
 				description: this.messageHandler
 					? this.messageHandler.get('setup.embedDesign.fields.allOff.description', {}, srv, gcfg)
-					: 'Alle Felder ausblenden',
+					: 'Hide all fields',
 				value: 'all_off',
 				emoji: this.messageHandler
 					? this.messageHandler.get('setup.embedDesign.fields.allOff.emoji', {}, srv, gcfg)
@@ -266,49 +271,79 @@ class InteractionHandler {
 				label: '─────────────',
 				description: this.messageHandler
 					? this.messageHandler.get('setup.embedDesign.fields.separator', {}, srv, gcfg)
-					: 'Einzelne Felder:',
+					: `Page ${page}/${totalPages}`,
 				value: 'separator'
 			});
 		}
 
 		// ═══════════════════════════════════════════════════════════
-		// EINZELNE FELDER
-		// FIX: ❌/✅ NUR in Description, NICHT im Label!
+		// EINZELNE FELDER DER AKTUELLEN SEITE
 		// ═══════════════════════════════════════════════════════════
+		
 		fields.forEach(field => {
 			const isVisible = s[field.key] !== false;
 			
 			const statusText = isVisible
 				? (this.messageHandler
 					? this.messageHandler.get(`setup.embedDesign.fields.${field.name}.visible`, {}, srv, gcfg)
-					: '✅ Sichtbar')
+					: '✅ Visible')
 				: (this.messageHandler
 					? this.messageHandler.get(`setup.embedDesign.fields.${field.name}.hidden`, {}, srv, gcfg)
-					: '❌ Versteckt');
+					: '❌ Hidden');
 			
 			const label = this.messageHandler
 				? this.messageHandler.get(`setup.embedDesign.fields.${field.name}.label`, {}, srv, gcfg)
 				: field.name;
 			
 			const emoji = this.messageHandler
-				? this.messageHandler.get(`setup.embedDesign.fields.${field.name}.emoji`, {}, srv, gcfg)
+				? this.messageHandler.get(`setup.embedDesign.fields.${field.name}.emoji`, {}, srv, gcfg) || '📋'
 				: '📋';
 
 			options.push({
-				label: label,              // ← FIX: Kein Status-Icon mehr hier!
-				description: statusText,   // ← Icon bleibt hier (✅ Sichtbar / ❌ Versteckt)
+				label: label,
+				description: statusText,
 				value: field.name,
 				emoji: emoji
 			});
 		});
 
+		// ═══════════════════════════════════════════════════════════
+		// NAVIGATION: NEXT PAGE
+		// ═══════════════════════════════════════════════════════════
+		
+		if (page < totalPages) {
+			options.push({
+				label: 'Next Page →',
+				description: `Go to page ${page + 1}/${totalPages}`,
+				value: `page_${page + 1}`,
+				emoji: '▶️'
+			});
+		}
+
+		// ═══════════════════════════════════════════════════════════
+		// NAVIGATION: PREVIOUS PAGE
+		// ═══════════════════════════════════════════════════════════
+		
+		if (page > 1) {
+			options.push({
+				label: '← Previous Page',
+				description: `Back to page ${page - 1}/${totalPages}`,
+				value: `page_${page - 1}`,
+				emoji: '◀️'
+			});
+		}
+
+		// ═══════════════════════════════════════════════════════════
 		// ZURÜCK
+		// ═══════════════════════════════════════════════════════════
+		
 		options.push({
 			label: this.messageHandler
 				? this.messageHandler.get('setup.common.back', {}, srv, gcfg)
-				: '← Zurück',
+				: '← Back',
 			value: 'back',
-			emoji: '↩️'
+			emoji: '↩️',
+			description: 'Return to previous menu'
 		});
 
 		const fieldOptions = new ActionRowBuilder()
@@ -317,7 +352,7 @@ class InteractionHandler {
 					.setCustomId(`setup_embed_fields_${idx}`)
 					.setPlaceholder(this.messageHandler
 						? this.messageHandler.get('setup.embedDesign.fields.placeholder', {}, srv, gcfg)
-						: '👁️ Feld ein-/ausblenden...')
+						: `👁️ Toggle field... (Page ${page}/${totalPages})`)
 					.addOptions(options)
 			);
 
@@ -616,6 +651,18 @@ class InteractionHandler {
 			const srv = gcfg.servers[idx];
 			if (!srv.embedSettings) srv.embedSettings = {};
 			const s = srv.embedSettings;
+			
+			// PAGE NAVIGATION
+		   if (value.startsWith('page_')) {
+			   const newPage = parseInt(value.split('_')[1]);
+			   await this.handleEmbedFields(interaction, idx, gcfg, newPage);
+			   return;
+		   }
+
+		   // SEPARATOR
+		   if (value === 'separator') {
+			   return;
+		   }
 
 			// ═══════════════════════════════════════════════════════════
 			// ZURÜCK
@@ -905,19 +952,12 @@ class InteractionHandler {
 					this.configManager.saveGuild(interaction.guildId, gcfg);
 					this.monitoringManager.startMonitoring(interaction.guildId);
 
-					// Refresh menu
-					await this.handlePasswordSettings(interaction, idx, gcfg);
-					
-					// Ephemeral confirmation
+					// Refresh menu with feedback
 					const action = value === 'toggle_field' 
 						? (s.showPasswordField ? 'Field shown' : 'Field hidden')
-						: (s.revealPasswordText ? 'Password will be revealed as spoiler' : 'Password will show as Yes/No');
+						: (s.revealPasswordText ? 'Password reveals as spoiler' : 'Password shows as Yes/No');
 					
-					await interaction.followUp({
-						content: `✅ **${srv.serverName}**\n${action}!`,
-						ephemeral: true
-					});
-					
+					await this.handlePasswordSettings(interaction, idx, gcfg, action);
 					return;
 				}
 
@@ -1024,6 +1064,11 @@ class InteractionHandler {
 
             if (value === 'weitere_links') {
                 await this.handleWeitereLinksModal(interaction, idx, gcfg);
+                return;
+            }
+			
+			if (value === 'server_password') {
+                await this.handleServerPasswordModal(interaction, idx, gcfg);
                 return;
             }
 
@@ -1661,7 +1706,7 @@ class InteractionHandler {
 
 		srv.serverName = interaction.fields.getTextInputValue('server_name');
 		srv.stats_url = interaction.fields.getTextInputValue('stats_url');
-		srv.career_savegame_url = interaction.fields.getTextInputValue('career_savegame_url') || '';
+		srv.career_savegame_url = interaction.fields.getTextInputValue('career_url') || '';
 		srv.mod_list_url = interaction.fields.getTextInputValue('mod_list_url') || '';
 
 		this.configManager.saveGuild(interaction.guildId, gcfg);
@@ -1814,12 +1859,16 @@ class InteractionHandler {
 				
 				// Mod/Vehicle Fields
 				showMods: true,
+				showModList: false,
 				showVehicles: true,
 				
 				// Career Fields
 				showMoney: true,
 				showDifficulty: true,
 				showTimeScale: true,
+				showCurrentDate: false,
+				showCreationDate: false,
+				showInitialLoan: false,
 				
 				// Economy Fields
 				showGreatDemands: true
@@ -1871,6 +1920,13 @@ class InteractionHandler {
         if (interaction.customId.startsWith('modal_weitere_links_')) {
             const idx = parseInt(interaction.customId.split('_')[3]);
             await this.handleWeitereLinksSubmit(interaction, idx, gcfg);
+            return;
+        }
+		
+		// Server Password Modal
+        if (interaction.customId.startsWith('modal_server_password_')) {
+            const idx = parseInt(interaction.customId.split('_')[3]);
+            await this.handleServerPasswordSubmit(interaction, idx, gcfg);
             return;
         }
 
@@ -2211,7 +2267,7 @@ class InteractionHandler {
 
 		srv.serverName = interaction.fields.getTextInputValue('server_name');
 		srv.stats_url = interaction.fields.getTextInputValue('stats_url');
-		srv.career_savegame_url = interaction.fields.getTextInputValue('career_savegame_url') || '';
+		srv.career_savegame_url = interaction.fields.getTextInputValue('career_url') || '';
 		srv.mod_list_url = interaction.fields.getTextInputValue('mod_list_url') || '';
 
 		this.configManager.saveGuild(interaction.guildId, gcfg);
@@ -2820,6 +2876,42 @@ class InteractionHandler {
 
         await interaction.showModal(modal);
     }
+	
+	/**
+     * Show Server Password Modal
+     */
+    async handleServerPasswordModal(interaction, idx, gcfg) {
+        const srv = gcfg.servers[idx];
+        
+        const currentPassword = (srv.serverPassword || '').substring(0, 100);
+
+        const modal = new ModalBuilder()
+            .setCustomId(`modal_server_password_${idx}`)
+            .setTitle(`🔐 ${srv.serverName.substring(0, 30)} - Password`);
+
+        modal.addComponents(
+            new ActionRowBuilder().addComponents(
+                new TextInputBuilder()
+                    .setCustomId('server_password')
+                    .setLabel('Server Password')
+                    .setPlaceholder('Enter the server password (leave empty to remove)')
+                    .setValue(currentPassword)
+                    .setStyle(TextInputStyle.Short)
+                    .setRequired(false)
+                    .setMaxLength(100)
+            ),
+            new ActionRowBuilder().addComponents(
+                new TextInputBuilder()
+                    .setCustomId('password_info')
+                    .setLabel('ℹ️ Info')
+                    .setValue('This password will be displayed in the embed when "Show Password" is enabled.')
+                    .setStyle(TextInputStyle.Paragraph)
+                    .setRequired(false)
+            )
+        );
+
+        await interaction.showModal(modal);
+    }
 
     /**
      * Handle Basic Info Modal Submit
@@ -2884,6 +2976,46 @@ class InteractionHandler {
                 .setTitle('✅ Erweiterte URLs aktualisiert')
                 .setDescription(`**${srv.serverName}**`)
                 .addFields(fields)],
+            ephemeral: true
+        });
+    }
+	
+	/**
+     * Handle Server Password Modal Submit
+     */
+    async handleServerPasswordSubmit(interaction, idx, gcfg) {
+        const srv = gcfg.servers[idx];
+
+        const password = interaction.fields.getTextInputValue('server_password') || '';
+        
+        // Save password (or remove if empty)
+        if (password.trim() === '') {
+            delete srv.serverPassword;
+            this.logger.info(`Server password removed for ${srv.serverName} by ${interaction.user.tag}`);
+        } else {
+            srv.serverPassword = password.trim();
+            this.logger.info(`Server password set for ${srv.serverName} by ${interaction.user.tag}`);
+        }
+
+        this.configManager.saveGuild(interaction.guildId, gcfg);
+        this.monitoringManager.startMonitoring(interaction.guildId);
+
+        const hasPassword = srv.serverPassword && srv.serverPassword.length > 0;
+
+        await interaction.reply({
+            embeds: [new EmbedBuilder()
+                .setColor(hasPassword ? '#00FF00' : '#FFA500')
+                .setTitle('🔐 Server Password Updated')
+                .setDescription(`**${srv.serverName}**`)
+                .addFields({
+                    name: 'Password',
+                    value: hasPassword 
+                        ? `\`${srv.serverPassword}\` (${srv.serverPassword.length} characters)` 
+                        : '❌ No password set',
+                    inline: false
+                })
+                .setFooter({ text: 'Password will be shown in embed when "Show Password" is enabled' })
+            ],
             ephemeral: true
         });
     }
@@ -2984,18 +3116,24 @@ class InteractionHandler {
 	// PASSWORD SETTINGS MENU
 	// ═══════════════════════════════════════════════════════════
 
-    async handlePasswordSettings(interaction, idx, gcfg) {
-        const srv = gcfg.servers[idx];
-        if (!srv.embedSettings) srv.embedSettings = {};
-        const s = srv.embedSettings;
+    async handlePasswordSettings(interaction, idx, gcfg, feedback = null) {
+		const srv = gcfg.servers[idx];
+		if (!srv.embedSettings) srv.embedSettings = {};
+		const s = srv.embedSettings;
 
-        const showField = s.showPasswordField !== false;
-        const revealText = s.revealPasswordText === true;
+		const showField = s.showPasswordField !== false;
+		const revealText = s.revealPasswordText === true;
 
-        const embed = new EmbedBuilder()
-            .setColor('#FF0000')
-            .setTitle(`🔒 ${srv.serverName} - Password Settings`)
-            .setDescription('Configure how the password field is displayed:')
+		// Feedback-Nachricht wenn vorhanden
+		let description = 'Configure how the password field is displayed:';
+		if (feedback) {
+			description = `✅ **${feedback}**\n\n${description}`;
+		}
+
+		const embed = new EmbedBuilder()
+			.setColor(feedback ? '#00FF00' : '#FF0000')  // Grün bei Erfolg
+			.setTitle(`🔒 ${srv.serverName} - Password Settings`)
+			.setDescription(description)
             .addFields(
                 {
                     name: '1️⃣ Show Password Field',
