@@ -4,6 +4,7 @@
 // ═══════════════════════════════════════════════════════════
 
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { ColorValidator } = require('./ColorValidator');
 
 class StatusEmbedBuilder {
     /**
@@ -31,7 +32,7 @@ class StatusEmbedBuilder {
             logger.debug(`  - hasPassword: ${data.hasPassword}`);
             logger.debug(`  - players: ${data.players ? `${data.players.online}/${data.players.max}` : 'NULL'}`);
             logger.debug(`  - modCount: ${data.modCount !== null ? data.modCount : 'NULL'}`);
-            logger.debug(`  - vehicles: ${data.vehicles ? `${data.vehicles.total} total` : 'NULL'}`);
+            logger.debug(`  - vehicles: ${data.vehicles ? `${data.vehicles.count} total` : 'NULL'}`);
             logger.debug(`  - career: ${data.career ? 'EXISTS' : 'NULL'}`);
             
             if (data.career) {
@@ -63,10 +64,11 @@ class StatusEmbedBuilder {
         // Emojis from config (with fallback)
         const e = s.emojis || gcfg.defaultEmojis;
         
-        const embed = new EmbedBuilder()
-            .setColor(data.online ? 
-                (s.colorOnline || gcfg.embedColors.online) : 
-                (s.colorOffline || gcfg.embedColors.offline))
+        const safeColor = ColorValidator.getStatusColor(
+			s, gcfg.embedColors || {}, data.online
+		);
+		const embed = new EmbedBuilder()
+			.setColor(safeColor)
             .setTimestamp();
         
         // Footer
@@ -125,6 +127,25 @@ class StatusEmbedBuilder {
                 });
             } else {
                 if (logger) logger.debug(`❌ Skipping VERSION field (data.version=${!!data.version}, showVersion=${s.showVersion}, check=${s.showVersion !== false})`);
+            }
+			
+			// ════════════════════════════════════════════════════════════
+            // PASSWORD FIELD (if set)
+            // ════════════════════════════════════════════════════════════
+            if (srv.serverPassword && s.showPassword !== false) {
+                if (logger) logger.debug(`✅ Adding PASSWORD field`);
+                
+                const passwordLabel = messageHandler
+                    ? messageHandler.get('status.online.fields.password', { emoji: e.password }, srv, gcfg)
+                    : `${e.password || '🔒'} Password`;
+                
+                embed.addFields({
+                    name: passwordLabel,
+                    value: `\`${srv.serverPassword}\``,
+                    inline: true
+                });
+            } else {
+                if (logger) logger.debug(`❌ Skipping PASSWORD field (password=${!!srv.serverPassword}, showPassword=${s.showPassword})`);
             }
 
             // ═══════════════════════════════════════════════════════════
@@ -204,7 +225,7 @@ class StatusEmbedBuilder {
             // VEHICLES FIELD
             // ═══════════════════════════════════════════════════════════
             if (data.vehicles && s.showVehicles !== false) {
-                if (logger) logger.debug(`✅ Adding VEHICLES field: ${data.vehicles.total}`);
+                if (logger) logger.debug(`✅ Adding VEHICLES field: ${data.vehicles.count}`);
                 
                 const vehiclesLabel = messageHandler
                     ? messageHandler.get('status.online.fields.vehicles', { emoji: e.vehicles }, srv, gcfg)
@@ -212,11 +233,30 @@ class StatusEmbedBuilder {
                 
                 embed.addFields({
                     name: vehiclesLabel,
-                    value: `${data.vehicles.total} total`,
+                    value: `${data.vehicles.count} total`,
                     inline: true
                 });
             } else {
                 if (logger) logger.debug(`❌ Skipping VEHICLES field (vehicles=${!!data.vehicles}, showVehicles=${s.showVehicles})`);
+            }
+			
+			// ════════════════════════════════════════════════════════════
+            // MOD LIST LINK
+            // ════════════════════════════════════════════════════════════
+            if (srv.mod_list_url && s.showModList !== false) {
+                if (logger) logger.debug(`✅ Adding MOD LIST LINK field`);
+                
+                const modListLabel = messageHandler
+                    ? messageHandler.get('status.online.fields.modList', { emoji: e.mods }, srv, gcfg)
+                    : `${e.mods || '🔧'} Mod List`;
+                
+                embed.addFields({
+                    name: modListLabel,
+                    value: `[View Mods](${srv.mod_list_url})`,
+                    inline: true
+                });
+            } else {
+                if (logger) logger.debug(`❌ Skipping MOD LIST LINK (url=${!!srv.mod_list_url}, showModList=${s.showModList})`);
             }
 
             // ═══════════════════════════════════════════════════════════
@@ -366,17 +406,26 @@ class StatusEmbedBuilder {
                 });
             }
 
-            // CREATION DATE (NEU)
-            if (data.career && data.career.creationDateFormatted && s.showCreationDate !== false) {
+            // ════════════════════════════════════════════════════════════
+            // CREATION DATE FIELD
+            // ════════════════════════════════════════════════════════════
+            if (data.career && data.career.creationDate && s.showCreationDate !== false) {
+                if (logger) logger.debug(`✅ Adding CREATION DATE field: ${data.career.creationDate}`);
+                
                 const creationDateLabel = messageHandler
-                    ? messageHandler.get('status.online.fields.creationDate', { emoji: e.creationDate || '🛠️' }, srv, gcfg)
-                    : `🛠️ Created`;
+                    ? messageHandler.get('status.online.fields.creationDate', { emoji: e.creationDate }, srv, gcfg)
+                    : `${e.creationDate || '🛠️'} Creation Date`;
+                
+                // Format creation date (ISO to readable)
+                const creationDateFormatted = new Date(data.career.creationDate).toLocaleDateString('de-DE');
                 
                 embed.addFields({
                     name: creationDateLabel,
-                    value: data.career.creationDateFormatted,
+                    value: creationDateFormatted,
                     inline: true
                 });
+            } else {
+                if (logger) logger.debug(`❌ Skipping CREATION DATE field`);
             }
 
             // ═══════════════════════════════════════════════════════════
@@ -555,28 +604,36 @@ class StatusEmbedBuilder {
                 });
             }
 
+			// ═══════════════════════════════════════════════════════════
             // ═══════════════════════════════════════════════════════════
             // FINANCIAL DATA
             // ═══════════════════════════════════════════════════════════
+			// ═══════════════════════════════════════════════════════════
 
-            // LOAN
-            if (data.career && data.career.loan != null && s.showLoan !== false) {
-                const loanLabel = messageHandler
-                    ? messageHandler.get('status.online.fields.loan', { emoji: e.loan || '🏦' }, srv, gcfg)
-                    : `🏦 Loan`;
+            // ════════════════════════════════════════════════════════════
+            // INITIAL LOAN FIELD
+            // ════════════════════════════════════════════════════════════
+            if (data.career && data.career.initialLoan !== null && s.showInitialLoan !== false) {
+                if (logger) logger.debug(`✅ Adding INITIAL LOAN field: ${data.career.initialLoan}`);
                 
-                const formattedLoan = new Intl.NumberFormat('en-US', {
+                const initialLoanLabel = messageHandler
+                    ? messageHandler.get('status.online.fields.initialLoan', { emoji: e.loan }, srv, gcfg)
+                    : `${e.loan || '🏦'} Initial Loan`;
+                
+                const formattedLoan = new Intl.NumberFormat('de-DE', {
                     style: 'currency',
                     currency: 'EUR',
                     minimumFractionDigits: 0,
                     maximumFractionDigits: 0
-                }).format(data.career.loan);
+                }).format(data.career.initialLoan);
                 
                 embed.addFields({
-                    name: loanLabel,
+                    name: initialLoanLabel,
                     value: formattedLoan,
                     inline: true
                 });
+            } else {
+                if (logger) logger.debug(`❌ Skipping INITIAL LOAN field`);
             }
 
             // INITIAL MONEY
@@ -599,59 +656,61 @@ class StatusEmbedBuilder {
                 });
             }
 
-            // ═══════════════════════════════════════════════════════════
+            // ════════════════════════════════════════════════════════════
             // HELPER SETTINGS
-            // ═══════════════════════════════════════════════════════════
-
-            // HELPER BUYS FUEL
-            if (data.career && data.career.helperBuysFuel != null && s.showHelperFuel !== false) {
+            // ════════════════════════════════════════════════════════════
+            if (data.career && s.showHelperSettings !== false) {
+                if (logger) logger.debug(`✅ Adding HELPER SETTINGS fields`);
+                
                 const helperFuelLabel = messageHandler
-                    ? messageHandler.get('status.online.fields.helperFuel', { emoji: e.helperFuel || '🛢️' }, srv, gcfg)
-                    : `🛢️ Helper Buys Fuel`;
+                    ? messageHandler.get('status.online.fields.helperFuel', { emoji: e.helperFuel }, srv, gcfg)
+                    : `${e.helperFuel || '🛢️'} Helper Buy Fuel`;
                 
-                const helperFuelValue = data.career.helperBuysFuel
-                    ? (messageHandler ? messageHandler.get('status.online.helperFuelOn', {}, srv, gcfg) : '✅ Yes')
-                    : (messageHandler ? messageHandler.get('status.online.helperFuelOff', {}, srv, gcfg) : '❌ No');
-                
-                embed.addFields({
-                    name: helperFuelLabel,
-                    value: helperFuelValue,
-                    inline: true
-                });
-            }
-
-            // HELPER BUYS SEEDS
-            if (data.career && data.career.helperBuysSeeds != null && s.showHelperSeeds !== false) {
                 const helperSeedsLabel = messageHandler
-                    ? messageHandler.get('status.online.fields.helperSeeds', { emoji: e.helperSeeds || '🌾' }, srv, gcfg)
-                    : `🌾 Helper Buys Seeds`;
+                    ? messageHandler.get('status.online.fields.helperSeeds', { emoji: e.helperSeeds }, srv, gcfg)
+                    : `${e.helperSeeds || '🌾'} Helper Buy Seeds`;
                 
-                const helperSeedsValue = data.career.helperBuysSeeds
-                    ? (messageHandler ? messageHandler.get('status.online.helperSeedsOn', {}, srv, gcfg) : '✅ Yes')
-                    : (messageHandler ? messageHandler.get('status.online.helperSeedsOff', {}, srv, gcfg) : '❌ No');
-                
-                embed.addFields({
-                    name: helperSeedsLabel,
-                    value: helperSeedsValue,
-                    inline: true
-                });
-            }
-
-            // HELPER BUYS FERTILIZER
-            if (data.career && data.career.helperBuysFertilizer != null && s.showHelperFertilizer !== false) {
                 const helperFertilizerLabel = messageHandler
-                    ? messageHandler.get('status.online.fields.helperFertilizer', { emoji: e.helperFertilizer || '💊' }, srv, gcfg)
-                    : `💊 Helper Buys Fertilizer`;
+                    ? messageHandler.get('status.online.fields.helperFertilizer', { emoji: e.helperFertilizer }, srv, gcfg)
+                    : `${e.helperFertilizer || '💊'} Helper Buy Fertilizer`;
                 
-                const helperFertilizerValue = data.career.helperBuysFertilizer
-                    ? (messageHandler ? messageHandler.get('status.online.helperFertilizerOn', {}, srv, gcfg) : '✅ Yes')
-                    : (messageHandler ? messageHandler.get('status.online.helperFertilizerOff', {}, srv, gcfg) : '❌ No');
-                
-                embed.addFields({
-                    name: helperFertilizerLabel,
-                    value: helperFertilizerValue,
-                    inline: true
-                });
+                // Fuel
+				if (data.career.helperBuyFuel !== null && data.career.helperBuyFuel !== undefined) {
+					const fuelValue = data.career.helperBuyFuel ? '✅ Enabled' : '❌ Disabled';
+					if (helperFuelLabel && typeof helperFuelLabel === 'string' && helperFuelLabel.length > 0) {
+						embed.addFields({
+							name: helperFuelLabel,
+							value: fuelValue,
+							inline: true
+						});
+					}
+				}
+
+				// Seeds
+				if (data.career.helperBuySeeds !== null && data.career.helperBuySeeds !== undefined) {
+					const seedsValue = data.career.helperBuySeeds ? '✅ Enabled' : '❌ Disabled';
+					if (helperSeedsLabel && typeof helperSeedsLabel === 'string' && helperSeedsLabel.length > 0) {
+						embed.addFields({
+							name: helperSeedsLabel,
+							value: seedsValue,
+							inline: true
+						});
+					}
+				}
+
+				// Fertilizer
+				if (data.career.helperBuyFertilizer !== null && data.career.helperBuyFertilizer !== undefined) {
+					const fertilizerValue = data.career.helperBuyFertilizer ? '✅ Enabled' : '❌ Disabled';
+					if (helperFertilizerLabel && typeof helperFertilizerLabel === 'string' && helperFertilizerLabel.length > 0) {
+						embed.addFields({
+							name: helperFertilizerLabel,
+							value: fertilizerValue,
+							inline: true
+						});
+					}
+				}
+            } else {
+                if (logger) logger.debug(`❌ Skipping HELPER SETTINGS fields`);
             }
 
             // ═══════════════════════════════════════════════════════════
@@ -670,8 +729,6 @@ class StatusEmbedBuilder {
                     inline: true
                 });
             }
-
-            // PLAYER LIST (bereits vorhanden, bleibt unverändert)
 
             // ═══════════════════════════════════════════════════════════
             // PLAYER LIST FIELD
@@ -705,6 +762,25 @@ class StatusEmbedBuilder {
                 }
             } else {
                 if (logger) logger.debug(`❌ Skipping PLAYER LIST field (showPlayerList=${s.showPlayerList})`);
+            }
+			
+			// ════════════════════════════════════════════════════════════
+            // CURRENT DATE FIELD
+            // ════════════════════════════════════════════════════════════
+            if (data.career && data.career.currentDate && s.showCurrentDate !== false) {
+                if (logger) logger.debug(`✅ Adding CURRENT DATE field: ${data.career.currentDate}`);
+                
+                const currentDateLabel = messageHandler
+                    ? messageHandler.get('status.online.fields.currentDate', { emoji: e.currentDate }, srv, gcfg)
+                    : `${e.currentDate || '📅'} Current Date`;
+                
+                embed.addFields({
+                    name: currentDateLabel,
+                    value: `${data.career.currentDate} (${data.career.currentSeason})`,
+                    inline: true
+                });
+            } else {
+                if (logger) logger.debug(`❌ Skipping CURRENT DATE field`);
             }
 
             // ═══════════════════════════════════════════════════════════
@@ -761,7 +837,26 @@ class StatusEmbedBuilder {
             logger.debug('Embed creation complete');
         }
 
-        return embed;
+		// Run debug modules
+		if (global.debugModules && global.debugModules.length > 0) {
+			global.debugModules.forEach(dm => {
+				try {
+					if (dm.module.EmbedValidator) {
+						dm.module.EmbedValidator.validate(embed, logger);
+					}
+					if (dm.module.FieldInspector) {
+						dm.module.FieldInspector.inspect(data, srv, s, logger);
+					}
+					if (dm.module.DataLogger) {
+						dm.module.DataLogger.log({ data, srv, embed: embed.data }, srv.serverName, logger);
+					}
+				} catch (e) {
+					logger.error(`[DEBUG:MODULE] ${dm.name} failed: ${e.message}`, 'debug-module');
+				}
+			});
+		}
+
+		return embed;
     }
 
     /**
