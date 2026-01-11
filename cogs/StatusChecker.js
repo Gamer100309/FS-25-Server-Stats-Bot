@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════
 //  STATUS CHECKER MODULE - FARMING SIMULATOR 25
 //  Enhanced with Vehicles and Economy XML Parsing
-//  Phase 3: Full Feature Set
+//  FINAL FIX: count + currentDate + Debug-Logs
 // ═══════════════════════════════════════════════════════════
 
 const https = require('https');
@@ -24,15 +24,15 @@ class StatusChecker {
 
             // Debug LOGGING
             if (logger) {
-				logger.debugSeparator('STATUS CHECK - XML FETCH');
-				logger.debug('Stats URL:', cfg.stats_url);
-				logger.debug(`Stats XML: ${statsXml ? `${statsXml.length} chars` : 'NULL'}`);
-				logger.debug(`Career URL: ${cfg.career_url || 'NOT SET'}`);
-				logger.debug(`Career XML: ${careerXml ? `${careerXml.length} chars` : 'NULL'}`);
-				logger.debug(`Vehicles URL: ${cfg.vehicles_url || 'NOT SET'}`);
-				logger.debug(`Vehicles XML: ${vehiclesXml ? `${vehiclesXml.length} chars` : 'NULL'}`);
-				logger.debug(`Economy URL: ${cfg.economy_url || 'NOT SET'}`);
-				logger.debug(`Economy XML: ${economyXml ? `${economyXml.length} chars` : 'NULL'}`);
+				logger.debugSeparator('network');
+				logger.debug(`Stats URL: ${cfg.stats_url}`, 'network');
+				logger.debug(`Stats XML: ${statsXml ? `${statsXml.length} chars` : 'NULL'}`, 'network');
+				logger.debug(`Career URL: ${cfg.career_url || 'NOT SET'}`, 'network');
+				logger.debug(`Career XML: ${careerXml ? `${careerXml.length} chars` : 'NULL'}`, 'network');
+				logger.debug(`Vehicles URL: ${cfg.vehicles_url || 'NOT SET'}`, 'network');
+				logger.debug(`Vehicles XML: ${vehiclesXml ? `${vehiclesXml.length} chars` : 'NULL'}`, 'network');
+				logger.debug(`Economy URL: ${cfg.economy_url || 'NOT SET'}`, 'network');
+				logger.debug(`Economy XML: ${economyXml ? `${economyXml.length} chars` : 'NULL'}`, 'network');
 			}
 
 
@@ -78,13 +78,21 @@ class StatusChecker {
             };
             
             if (logger) {
-				logger.debugSeparator('STATUS CHECK - FINAL RESULT');
-				logger.debug('Online: true');
-				logger.debug(`Career data: ${careerData ? 'EXISTS' : 'NULL'}`);
+				logger.debugSeparator('general');
+				logger.debug('Online: true', 'general');
+				logger.debug(`Career data: ${careerData ? 'EXISTS' : 'NULL'}`, 'general');
 				if (careerData) {
-					logger.debug(`  - money: ${careerData.money !== null ? careerData.money : 'NULL'}`);
-					logger.debug(`  - difficulty: ${careerData.difficulty || 'NULL'}`);
-					logger.debug(`  - timeScale: ${careerData.timeScale !== null ? careerData.timeScale : 'NULL'}`);
+					logger.debug(`  - money: ${careerData.money !== null ? careerData.money : 'NULL'}`, 'general');
+					logger.debug(`  - difficulty: ${careerData.difficulty || 'NULL'}`, 'general');
+					logger.debug(`  - timeScale: ${careerData.timeScale !== null ? careerData.timeScale : 'NULL'}`, 'general');
+					logger.debug(`  - currentDate: ${careerData.currentDate || 'NULL'}`, 'general');
+					logger.debug(`  - creationDate: ${careerData.creationDate || 'NULL'}`, 'general');
+				}
+				logger.debug(`Vehicles data: ${vehiclesData ? 'EXISTS' : 'NULL'}`, 'general');
+				if (vehiclesData) {
+					logger.debug(`  - count: ${vehiclesData.count}`, 'general');
+					logger.debug(`  - totalPrice: €${vehiclesData.totalPrice}`, 'general');
+					logger.debug(`  - totalOperatingTime: ${vehiclesData.totalOperatingTimeFormatted}`, 'general');
 				}
 			}
 
@@ -193,221 +201,282 @@ class StatusChecker {
 	 * Parse Career Savegame XML - ULTRA-COMPLETE VERSION
 	 * Extracts ALL available data from career savegame
 	 */
-	static parseCareerXml(xml) {
+	static parseCareerXml(xml, logger = null) {
+		const log = (msg, scope = 'career') => {
+			if (logger && logger.debug) {
+				logger.debug(msg, scope);
+			} else {
+				console.log(msg);
+			}
+		};
+
+		log('═══════════════════════════════════════════════════════════');
+		log('📊 PARSING CAREER SAVEGAME XML');
+		log('═══════════════════════════════════════════════════════════');
+		
+		const result = {};
+
+		// ═══════════════════════════════════════════════════════════
+		// HELPER: Safe Extract (mit Fehler-Isolierung)
+		// ═══════════════════════════════════════════════════════════
+		
+		const safeExtract = (tagName, parseFunc = (v) => v.trim(), defaultValue = null) => {
+			try {
+				const pattern = new RegExp(`<${tagName}>([\\s\\S]*?)<\\/${tagName}>`, 'i');
+				const match = xml.match(pattern);
+				if (match && match[1] !== undefined && match[1] !== null) {
+					const rawValue = match[1].trim();
+					if (rawValue === '') {
+						log(`  ⚠️  ${tagName}: EMPTY (using default: ${defaultValue})`);
+						return defaultValue;
+					}
+					const value = parseFunc(rawValue);
+					log(`  ✅ ${tagName}: ${value}`);
+					return value;
+				} else {
+					log(`  ⚠️  ${tagName}: NOT FOUND (using default: ${defaultValue})`);
+					return defaultValue;
+				}
+			} catch (err) {
+				log(`  ❌ ${tagName}: ERROR - ${err.message}`);
+				return defaultValue;
+			}
+		};
+
+		// ═══════════════════════════════════════════════════════════
+		// PHASE 1: BASIC CAREER DATA
+		// ═══════════════════════════════════════════════════════════
+		
+		log('🔍 Phase 1: Basic Career Data');
+		
+		// Money (in <statistics>!)
+		result.money = safeExtract('money', parseFloat, null);
+		
+		// Difficulty
+		result.difficulty = safeExtract('economicDifficulty', v => v, null);
+		
+		// Time Scale
+		result.timeScale = safeExtract('timeScale', parseFloat, null);
+
+		// ═══════════════════════════════════════════════════════════
+		// PHASE 2: TIME & DATE
+		// ═══════════════════════════════════════════════════════════
+		
+		log('🔍 Phase 2: Time & Date');
+		
+		// Play Time (in Minuten -> Stunden)
+		const playTimeMinutes = safeExtract('playTime', parseFloat, null);
+		if (playTimeMinutes !== null) {
+			result.playTime = playTimeMinutes / 60; // Convert minutes to hours
+			result.playTimeFormatted = this.formatPlayTime(result.playTime);
+			log(`  🕐 Play Time Formatted: ${result.playTimeFormatted}`);
+		} else {
+			result.playTime = null;
+			result.playTimeFormatted = null;
+		}
+
+		// Save Date
+		const saveDate = safeExtract('saveDate', v => v, null);
+		if (saveDate) {
+			result.saveDate = saveDate;
+			result.saveDateFormatted = this.formatSaveDate(saveDate);
+			log(`  💾 Save Date Formatted: ${result.saveDateFormatted}`);
+		} else {
+			result.saveDate = null;
+			result.saveDateFormatted = null;
+		}
+
+		// Creation Date
+		result.creationDate = safeExtract('creationDate', v => v, null);
+		
+		// Current Date (NEW! - FIXED!)
+		// Parse dayTime to get current in-game date
+		const currentDateParsed = this.parseCurrentDate(xml);
+		if (currentDateParsed) {
+			result.currentDate = currentDateParsed.formatted;
+			result.currentDay = currentDateParsed.day;
+			result.currentMonth = currentDateParsed.month;
+			result.currentYear = currentDateParsed.year;
+			result.currentSeason = currentDateParsed.season;
+			result.currentSeasonNumber = currentDateParsed.seasonNumber;
+			log(`  📅 Current Date: ${result.currentDate} (${result.currentSeason})`);
+		} else {
+			result.currentDate = null;
+			result.currentDay = null;
+			result.currentMonth = null;
+			result.currentYear = null;
+			result.currentSeason = null;
+			result.currentSeasonNumber = null;
+		}
+
+		// ═══════════════════════════════════════════════════════════
+		// PHASE 3: GAMEPLAY SETTINGS (REPARIERT!)
+		// ═══════════════════════════════════════════════════════════
+		
+		log('🔍 Phase 3: Gameplay Settings');
+		
+		// Growth Mode → Growth Rate Umrechnung
+		// growthMode: 1 = 1x, 2 = 2x, 3 = 4x
+		const growthMode = safeExtract('growthMode', parseInt, null);
+		if (growthMode !== null) {
+			const rateMap = { 1: 1, 2: 2, 3: 4 };
+			result.growthRate = rateMap[growthMode] || growthMode;
+			log(`  🌱 Growth Rate (converted from mode ${growthMode}): ${result.growthRate}x`);
+		} else {
+			result.growthRate = null;
+		}
+
+		// Planned Days Per Period (Tage pro Monat)
+		result.daysPerPeriod = safeExtract('plannedDaysPerPeriod', parseInt, null);
+
+		// Auto Save (Interval > 0 = enabled)
+		const autoSaveInterval = safeExtract('autoSaveInterval', parseFloat, null);
+		if (autoSaveInterval !== null) {
+			result.autoSaveEnabled = autoSaveInterval > 0;
+			result.autoSaveInterval = autoSaveInterval;
+			log(`  💾 Auto Save: ${result.autoSaveEnabled} (interval: ${autoSaveInterval}s)`);
+		} else {
+			result.autoSaveEnabled = null;
+			result.autoSaveInterval = null;
+		}
+
+		// ═══════════════════════════════════════════════════════════
+		// PHASE 4: ENVIRONMENTAL SETTINGS (REPARIERT!)
+		// ═══════════════════════════════════════════════════════════
+		
+		log('🔍 Phase 4: Environmental Settings');
+		
+		// Traffic
+		result.trafficEnabled = safeExtract('trafficEnabled', v => v === 'true', null);
+		
+		// Weeds
+		result.weedsEnabled = safeExtract('weedsEnabled', v => v === 'true', null);
+		
+		// Fruit Destruction
+		result.fruitDestruction = safeExtract('fruitDestruction', v => v === 'true', null);
+		
+		// Snow (REPARIERT: isSnowEnabled!)
+		result.snowEnabled = safeExtract('isSnowEnabled', v => v === 'true', null);
+		
+		// Stones
+		result.stonesEnabled = safeExtract('stonesEnabled', v => v === 'true', null);
+		
+		// Fuel Usage
+		result.fuelUsage = safeExtract('fuelUsage', parseInt, null);
+
+		// ═══════════════════════════════════════════════════════════
+		// PHASE 5: FINANCIAL DATA (REPARIERT!)
+		// ═══════════════════════════════════════════════════════════
+		
+		log('🔍 Phase 5: Financial Data');
+		
+		// Initial Money (REPARIERT: initialMoney!)
+		result.initialMoney = safeExtract('initialMoney', parseFloat, null);
+		
+		// Initial Loan (nur Startkredit)
+		result.initialLoan = safeExtract('initialLoan', parseFloat, null);
+		
+		// Aktueller Kredit existiert NICHT in XML
+		result.loan = null;
+		log('  ⚠️  loan: NOT in XML (only initialLoan exists)');
+
+		// ═══════════════════════════════════════════════════════════
+		// PHASE 6: HELPER SETTINGS
+		// ═══════════════════════════════════════════════════════════
+		
+		log('🔍 Phase 6: Helper Settings');
+		
+		result.helperBuyFuel = safeExtract('helperBuyFuel', v => v === 'true', null);
+		result.helperBuySeeds = safeExtract('helperBuySeeds', v => v === 'true', null);
+		result.helperBuyFertilizer = safeExtract('helperBuyFertilizer', v => v === 'true', null);
+
+		// ═══════════════════════════════════════════════════════════
+		// PHASE 7: SAVEGAME INFO (REPARIERT!)
+		// ═══════════════════════════════════════════════════════════
+		
+		log('🔍 Phase 7: Savegame Info');
+		
+		// Savegame Name (REPARIERT: savegameName!)
+		result.savegameName = safeExtract('savegameName', v => v, null);
+		
+		// Map Title
+		result.mapTitle = safeExtract('mapTitle', v => v, null);
+
+		// ═══════════════════════════════════════════════════════════
+		// NICHT-EXISTENTE FELDER (Explizit auf null)
+		// ═══════════════════════════════════════════════════════════
+		
+		log('🔍 Non-Existent Fields (set to null)');
+		
+		result.fieldJobsEnabled = null;
+		log('  ⚠️  fieldJobsEnabled: NOT in XML');
+		
+		result.resetVehicles = null;
+		log('  ⚠️  resetVehicles: NOT in XML');
+
+		// ═══════════════════════════════════════════════════════════
+		// SUMMARY
+		// ═══════════════════════════════════════════════════════════
+		
+		log('═══════════════════════════════════════════════════════════');
+		log(`✅ Career XML Parsing Complete (${Object.keys(result).length} fields)`);
+		log('═══════════════════════════════════════════════════════════');
+		
+		return result;
+	}
+
+	// ═══════════════════════════════════════════════════════════
+	// NEW: Parse Current Date from dayTime
+	// ═══════════════════════════════════════════════════════════
+	
+	/**
+	 * Parse current in-game date from dayTime structure
+	 * @param {string} xml - Career XML
+	 * @returns {object} Parsed date info or null
+	 */
+	static parseCurrentDate(xml) {
 		try {
-			console.log('═══════════════════════════════════════════════════════════');
-			console.log('📊 PARSING CAREER SAVEGAME XML');
-			console.log('═══════════════════════════════════════════════════════════');
+			// Extract dayTime tag
+			const dayTimeMatch = xml.match(/<dayTime>([\s\S]*?)<\/dayTime>/i);
+			if (!dayTimeMatch) return null;
 			
-			const result = {};
-
-			// ═══════════════════════════════════════════════════════════
-			// PHASE 1: BASIC CAREER DATA (bereits implementiert)
-			// ═══════════════════════════════════════════════════════════
+			const dayTimeContent = dayTimeMatch[1];
 			
-			console.log('🔍 Phase 1: Basic Career Data');
+			// Extract current day, period (month), year
+			const dayMatch = dayTimeContent.match(/<currentDay>(\d+)<\/currentDay>/i);
+			const periodMatch = dayTimeContent.match(/<currentPeriod>(\d+)<\/currentPeriod>/i);
+			const yearMatch = dayTimeContent.match(/<currentYear>(\d+)<\/currentYear>/i);
 			
-			// Extract money
-			const moneyMatch = xml.match(/<money>([\d.]+)<\/money>/);
-			result.money = moneyMatch ? parseFloat(moneyMatch[1]) : null;
-			console.log(`  💰 Money: ${result.money}`);
-
-			// Extract difficulty
-			const difficultyMatch = xml.match(/<economicDifficulty>([^<]+)<\/economicDifficulty>/);
-			result.difficulty = difficultyMatch ? difficultyMatch[1].trim() : null;
-			console.log(`  ⚡ Difficulty: ${result.difficulty}`);
-
-			// Extract time scale
-			const timeScaleMatch = xml.match(/<timeScale>([\d.]+)<\/timeScale>/);
-			result.timeScale = timeScaleMatch ? parseFloat(timeScaleMatch[1]) : null;
-			console.log(`  ⏱️ Time Scale: ${result.timeScale}x`);
-
-			// ═══════════════════════════════════════════════════════════
-			// PHASE 2: TIME & DATE (bereits implementiert)
-			// ═══════════════════════════════════════════════════════════
+			if (!dayMatch || !periodMatch || !yearMatch) return null;
 			
-			console.log('🔍 Phase 2: Time & Date');
+			const day = parseInt(dayMatch[1]);
+			const period = parseInt(periodMatch[1]); // 0-11 (month)
+			const year = parseInt(yearMatch[1]);
 			
-			// Play Time (in Millisekunden -> Stunden umrechnen)
-			const playTimeMatch = xml.match(/<playTime>([\d.]+)<\/playTime>/);
-			if (playTimeMatch) {
-				const playTimeMs = parseFloat(playTimeMatch[1]);
-				result.playTime = playTimeMs / 1000 / 60 / 60; // Convert to hours
-				result.playTimeFormatted = this.formatPlayTime(result.playTime);
-				console.log(`  🕐 Play Time: ${result.playTimeFormatted} (${result.playTime}h)`);
-			} else {
-				result.playTime = null;
-				result.playTimeFormatted = null;
-				console.log(`  🕐 Play Time: NOT FOUND`);
-			}
-
-			// Current Day
-			const dayPeriodMatch = xml.match(/<dayTime>\s*<currentDay>([\d]+)<\/currentDay>/);
-			result.currentDay = dayPeriodMatch ? parseInt(dayPeriodMatch[1]) : null;
-			console.log(`  📅 Current Day: ${result.currentDay}`);
-
-			// Period Duration (Tage pro Periode/Monat)
-			const periodMatch = xml.match(/<period>([\d]+)<\/period>/);
-			result.daysPerPeriod = periodMatch ? parseInt(periodMatch[1]) : null;
-			console.log(`  📆 Days Per Period: ${result.daysPerPeriod}`);
-
-			// Current Season
-			const seasonMatch = xml.match(/<visualSeason>([\d]+)<\/visualSeason>/);
-			if (seasonMatch) {
-				const seasonNum = parseInt(seasonMatch[1]);
-				result.currentSeason = this.getSeasonName(seasonNum);
-				result.currentSeasonNumber = seasonNum;
-				console.log(`  🍂 Season: ${result.currentSeason} (#${seasonNum})`);
-			} else {
-				result.currentSeason = null;
-				result.currentSeasonNumber = null;
-				console.log(`  🍂 Season: NOT FOUND`);
-			}
-
-			// Save Date
-			const saveDateMatch = xml.match(/<saveDate>([^<]+)<\/saveDate>/);
-			if (saveDateMatch) {
-				result.saveDate = saveDateMatch[1].trim();
-				result.saveDateFormatted = this.formatSaveDate(result.saveDate);
-				console.log(`  💾 Save Date: ${result.saveDateFormatted}`);
-			} else {
-				result.saveDate = null;
-				result.saveDateFormatted = null;
-				console.log(`  💾 Save Date: NOT FOUND`);
-			}
-
-			// ═══════════════════════════════════════════════════════════
-			// PHASE 3: GAMEPLAY SETTINGS (bereits implementiert + NEU)
-			// ═══════════════════════════════════════════════════════════
+			// Calculate season (0=Spring, 1=Summer, 2=Autumn, 3=Winter)
+			const seasonNumber = Math.floor(period / 3);
+			const season = this.getSeasonName(seasonNumber);
 			
-			console.log('🔍 Phase 3: Gameplay Settings');
+			// Month names
+			const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+			                   'July', 'August', 'September', 'October', 'November', 'December'];
+			const monthName = monthNames[period] || 'Unknown';
 			
-			// Growth Rate
-			const growthMatch = xml.match(/<growthRate>([\d.]+)<\/growthRate>/);
-			result.growthRate = growthMatch ? parseFloat(growthMatch[1]) : null;
-			console.log(`  🌱 Growth Rate: ${result.growthRate}x`);
-
-			// Field Jobs Enabled
-			const fieldJobsMatch = xml.match(/<missionFieldJobsEnabled>([^<]+)<\/missionFieldJobsEnabled>/);
-			result.fieldJobsEnabled = fieldJobsMatch ? (fieldJobsMatch[1].trim() === 'true') : null;
-			console.log(`  📋 Field Jobs: ${result.fieldJobsEnabled}`);
-
-			// Auto Save Enabled
-			const autoSaveMatch = xml.match(/<autoSaveEnabled>([^<]+)<\/autoSaveEnabled>/);
-			result.autoSaveEnabled = autoSaveMatch ? (autoSaveMatch[1].trim() === 'true') : null;
-			console.log(`  💾 Auto Save: ${result.autoSaveEnabled}`);
-
-			// Reset Vehicles
-			const resetVehiclesMatch = xml.match(/<resetVehicles>([^<]+)<\/resetVehicles>/);
-			result.resetVehicles = resetVehiclesMatch ? (resetVehiclesMatch[1].trim() === 'true') : null;
-			console.log(`  🔄 Reset Vehicles: ${result.resetVehicles}`);
-
-			// ═══════════════════════════════════════════════════════════
-			// PHASE 4: NEW GAMEPLAY SETTINGS
-			// ═══════════════════════════════════════════════════════════
+			// Format: "Day 5, June Year 3" or similar
+			const formatted = `Day ${day}, ${monthName} Year ${year}`;
 			
-			console.log('🔍 Phase 4: NEW Gameplay Settings');
+			return {
+				day: day,
+				month: period + 1, // 1-12
+				monthName: monthName,
+				year: year,
+				season: season,
+				seasonNumber: seasonNumber,
+				formatted: formatted
+			};
 			
-			// Traffic Enabled
-			const trafficMatch = xml.match(/<trafficEnabled>([^<]+)<\/trafficEnabled>/);
-			result.trafficEnabled = trafficMatch ? (trafficMatch[1].trim() === 'true') : null;
-			console.log(`  🚦 Traffic: ${result.trafficEnabled}`);
-
-			// Weeds Enabled
-			const weedsMatch = xml.match(/<weedsEnabled>([^<]+)<\/weedsEnabled>/);
-			result.weedsEnabled = weedsMatch ? (weedsMatch[1].trim() === 'true') : null;
-			console.log(`  🌱 Weeds: ${result.weedsEnabled}`);
-
-			// Fruit Destruction
-			const fruitDestructionMatch = xml.match(/<fruitDestruction>([^<]+)<\/fruitDestruction>/);
-			result.fruitDestruction = fruitDestructionMatch ? (fruitDestructionMatch[1].trim() === 'true') : null;
-			console.log(`  🌾 Fruit Destruction: ${result.fruitDestruction}`);
-
-			// Snow Enabled
-			const snowMatch = xml.match(/<snowEnabled>([^<]+)<\/snowEnabled>/);
-			result.snowEnabled = snowMatch ? (snowMatch[1].trim() === 'true') : null;
-			console.log(`  ❄️ Snow: ${result.snowEnabled}`);
-
-			// Stones Enabled
-			const stonesMatch = xml.match(/<stonesEnabled>([^<]+)<\/stonesEnabled>/);
-			result.stonesEnabled = stonesMatch ? (stonesMatch[1].trim() === 'true') : null;
-			console.log(`  🪨 Stones: ${result.stonesEnabled}`);
-
-			// Fuel Usage
-			const fuelUsageMatch = xml.match(/<fuelUsage>([\d.]+)<\/fuelUsage>/);
-			result.fuelUsage = fuelUsageMatch ? parseFloat(fuelUsageMatch[1]) : null;
-			console.log(`  ⛽ Fuel Usage: ${result.fuelUsage}`);
-
-			// ═══════════════════════════════════════════════════════════
-			// PHASE 5: FINANCIAL DATA
-			// ═══════════════════════════════════════════════════════════
-			
-			console.log('🔍 Phase 5: Financial Data');
-			
-			// Loan (aktueller Kredit)
-			const loanMatch = xml.match(/<loan>([\d.]+)<\/loan>/);
-			result.loan = loanMatch ? parseFloat(loanMatch[1]) : null;
-			console.log(`  🏦 Loan: €${result.loan}`);
-
-			// Initial Money (Startkapital bei Spielstandserstellung)
-			const initialMoneyMatch = xml.match(/<initialMoney>([\d.]+)<\/initialMoney>/);
-			result.initialMoney = initialMoneyMatch ? parseFloat(initialMoneyMatch[1]) : null;
-			console.log(`  💼 Initial Money: €${result.initialMoney}`);
-
-			// ═══════════════════════════════════════════════════════════
-			// PHASE 6: HELPER SETTINGS
-			// ═══════════════════════════════════════════════════════════
-			
-			console.log('🔍 Phase 6: Helper Settings');
-			
-			// Helper Buys Fuel
-			const helperFuelMatch = xml.match(/<helperBuyFuel>([^<]+)<\/helperBuyFuel>/);
-			result.helperBuysFuel = helperFuelMatch ? (helperFuelMatch[1].trim() === 'true') : null;
-			console.log(`  🛢️ Helper Buys Fuel: ${result.helperBuysFuel}`);
-
-			// Helper Buys Seeds
-			const helperSeedsMatch = xml.match(/<helperBuySeeds>([^<]+)<\/helperBuySeeds>/);
-			result.helperBuysSeeds = helperSeedsMatch ? (helperSeedsMatch[1].trim() === 'true') : null;
-			console.log(`  🌾 Helper Buys Seeds: ${result.helperBuysSeeds}`);
-
-			// Helper Buys Fertilizer
-			const helperFertilizerMatch = xml.match(/<helperBuyFertilizer>([^<]+)<\/helperBuyFertilizer>/);
-			result.helperBuysFertilizer = helperFertilizerMatch ? (helperFertilizerMatch[1].trim() === 'true') : null;
-			console.log(`  💊 Helper Buys Fertilizer: ${result.helperBuysFertilizer}`);
-
-			// ═══════════════════════════════════════════════════════════
-			// PHASE 7: SAVEGAME INFO
-			// ═══════════════════════════════════════════════════════════
-			
-			console.log('🔍 Phase 7: Savegame Info');
-			
-			// Savegame Name
-			const savegameNameMatch = xml.match(/<savegameName>([^<]+)<\/savegameName>/);
-			result.savegameName = savegameNameMatch ? this.decodeHtmlEntities(savegameNameMatch[1].trim()) : null;
-			console.log(`  📝 Savegame Name: ${result.savegameName}`);
-
-			// Creation Date
-			const creationDateMatch = xml.match(/<creationDate>([^<]+)<\/creationDate>/);
-			if (creationDateMatch) {
-				result.creationDate = creationDateMatch[1].trim();
-				result.creationDateFormatted = this.formatSaveDate(result.creationDate);
-				console.log(`  🛠️ Creation Date: ${result.creationDateFormatted}`);
-			} else {
-				result.creationDate = null;
-				result.creationDateFormatted = null;
-				console.log(`  🛠️ Creation Date: NOT FOUND`);
-			}
-
-			console.log('═══════════════════════════════════════════════════════════');
-			console.log('✅ CAREER XML PARSING COMPLETE');
-			console.log(`📊 Total fields extracted: ${Object.keys(result).length}`);
-			console.log('═══════════════════════════════════════════════════════════');
-
-			return result;
-
-		} catch (e) {
-			console.error('❌ Career XML Parse Error:', e);
-			console.error('Stack:', e.stack);
+		} catch (err) {
+			console.log(`  ❌ parseCurrentDate ERROR: ${err.message}`);
 			return null;
 		}
 	}
@@ -468,179 +537,142 @@ class StatusChecker {
 			return dateStr;
 		}
 	}
-/**
- * Format play time to human readable format
- * @param {number} hours - Play time in hours
- * @returns {string} Formatted time (e.g. "45h 23m")
- */
-static formatPlayTime(hours) {
-    if (!hours) return null;
-    
-    const h = Math.floor(hours);
-    const m = Math.floor((hours - h) * 60);
-    
-    if (h > 0 && m > 0) {
-        return `${h}h ${m}m`;
-    } else if (h > 0) {
-        return `${h}h`;
-    } else {
-        return `${m}m`;
-    }
-}
-
-/**
- * Get season name from number
- * @param {number} seasonNum - Season number (0-3)
- * @returns {string} Season name
- */
-static getSeasonName(seasonNum) {
-    const seasons = ['SPRING', 'SUMMER', 'AUTUMN', 'WINTER'];
-    return seasons[seasonNum] || 'UNKNOWN';
-}
-
-/**
- * Format save date to readable format
- * @param {string} dateStr - ISO date string
- * @returns {string} Formatted date
- */
-static formatSaveDate(dateStr) {
-    if (!dateStr) return null;
-    
-    try {
-        const date = new Date(dateStr);
-        // Format: "06.01.2025 15:30"
-        const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const year = date.getFullYear();
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        
-        return `${day}.${month}.${year} ${hours}:${minutes}`;
-    } catch (e) {
-        return dateStr;
-    }
-}
 
     /**
      * Parse Vehicles XML - Enhanced for detailed vehicle info
+     * FIXED: Returns count instead of totalVehicles
      */
     static parseVehiclesXml(xml, logger = null) {
         try {
-            const result = {
-                total: 0,
-                totalValue: 0,
-                totalOperatingHours: 0,
-                farms: {},
-                vehicles: [],
-                categories: {}
+            const log = (msg, scope = 'vehicles') => {
+                if (logger && logger.debug) {
+                    logger.debug(msg, scope);
+                } else {
+                    console.log(msg);
+                }
             };
 
-            if (logger) logger.debug('=== PARSING VEHICLES XML ===');
+            log('═══════════════════════════════════════════════════════════');
+            log('🚜 PARSING VEHICLES XML');
+            log('═══════════════════════════════════════════════════════════');
 
-            // Extract all vehicle tags with full content
-            const vehicleMatches = xml.matchAll(/<vehicle\s+([^>]+)>([\s\S]*?)<\/vehicle>/gi);
+            const vehicles = [];
+            let totalPrice = 0;
+            let totalOperatingTime = 0;
+            let trainCount = 0;
             let vehicleCount = 0;
 
-            for (const match of vehicleMatches) {
-                vehicleCount++;
-                const attrs = match[1];
-                const content = match[2];
-                
-                // Extract basic attributes
-                const farmId = this.extractAttribute(attrs, 'farmId') || '0';
-                const price = parseFloat(this.extractAttribute(attrs, 'price')) || 0;
-                const operatingTime = parseFloat(this.extractAttribute(attrs, 'operatingTime')) || 0;
-                
-                let vehicleName = 'Unknown';
-                let category = 'other';
-                let configPath = null;
-                
-                // METHOD 1: Try configFileName attribute in vehicle tag
-                configPath = this.extractAttribute(attrs, 'configFileName');
-                
-                // METHOD 2: Try configFileName in content
-                if (!configPath) {
-                    const configMatch = content.match(/configFileName="([^"]+)"/);
-                    if (configMatch) {
-                        configPath = configMatch[1];
-                    }
-                }
-                
-                // METHOD 3: Try filename attribute
-                if (!configPath) {
-                    configPath = this.extractAttribute(attrs, 'filename');
-                }
-                
-                // METHOD 4: Try any XML path pattern
-                if (!configPath) {
-                    const pathMatch = content.match(/\b([A-Za-z0-9_]+\/[A-Za-z0-9_]+\.xml)\b/);
-                    if (pathMatch) {
-                        configPath = pathMatch[1];
-                    }
-                }
-                
-                // Parse the config path if we found one
-                if (configPath) {
-                    const parts = configPath.split('/');
-                    const xmlFile = parts[parts.length - 1];
-                    const filename = xmlFile.replace('.xml', '');
-                    
-                    vehicleName = this.formatVehicleName(filename);
-                    category = this.determineVehicleCategory(configPath);
-                    
-                    if (logger) logger.debug(`  Vehicle #${vehicleCount}: ${filename} -> ${vehicleName} (${category})`);
-                } else {
-                    if (logger) logger.debug(`  Vehicle #${vehicleCount}: NO CONFIG PATH FOUND`);
-                    if (logger) logger.debug(`    Attrs: ${attrs.substring(0, 100)}...`);
-                    if (logger) logger.debug(`    Content: ${content.substring(0, 100)}...`);
-                }
-                
-                const ageMatch = content.match(/<propertyState\s+age="([^"]+)"/);
-                const age = ageMatch ? parseFloat(ageMatch[1]) : 0;
+            // ═══════════════════════════════════════════════════════════
+            // REGEX PATTERN FÜR VEHICLES
+            // ═══════════════════════════════════════════════════════════
+            
+            const vehiclePattern = /<vehicle\s+([^>]+)>/g;
+            let match;
 
-                const vehicle = {
-                    name: vehicleName,
-                    category: category,
+            while ((match = vehiclePattern.exec(xml)) !== null) {
+                const attrs = match[1];
+                
+                // Extract attributes
+                const nameMatch = attrs.match(/filename="([^"]+)"/);
+                const priceMatch = attrs.match(/price="([\d.]+)"/);
+                const operatingTimeMatch = attrs.match(/operatingTime="([\d.]+)"/);
+                const farmIdMatch = attrs.match(/farmId="(\d+)"/);
+                
+                // Get vehicle name from filename
+                let name = 'Unknown';
+                if (nameMatch && nameMatch[1]) {
+                    const parts = nameMatch[1].split('/');
+                    const filename = parts[parts.length - 1];
+                    name = filename.replace('.xml', '');
+                }
+
+                const price = priceMatch ? parseFloat(priceMatch[1]) : 0;
+                const operatingTime = operatingTimeMatch ? parseFloat(operatingTimeMatch[1]) : 0;
+                const farmId = farmIdMatch ? parseInt(farmIdMatch[1]) : 0;
+
+                // ═══════════════════════════════════════════════════════════
+                // TRAIN-FILTER (wie in VehicleMenus.js filterFarm0)
+                // ═══════════════════════════════════════════════════════════
+                
+                const isTrain = name.toLowerCase().includes('locomotive') || 
+                               name.toLowerCase().includes('train') ||
+                               attrs.includes('type="trainTrailer"') ||
+                               attrs.includes('type="trainTimberTrailer"');
+
+                if (isTrain) {
+                    trainCount++;
+                    log(`  🚂 SKIPPED (Train): ${name}`);
+                    continue; // Skip trains
+                }
+
+                // Filter farmId 0 (wie in VehicleMenus.js)
+                if (farmId === 0) {
+                    log(`  ⚠️  SKIPPED (farmId 0): ${name}`);
+                    continue;
+                }
+
+                // Add vehicle
+                vehicles.push({
+                    name: name,
                     price: price,
                     operatingTime: operatingTime,
-                    age: age,
                     farmId: farmId
-                };
+                });
 
-                result.vehicles.push(vehicle);
-                result.total++;
-                result.totalValue += price;
-                result.totalOperatingHours += operatingTime;
+                // Add to totals
+                totalPrice += price;
+                totalOperatingTime += operatingTime;
+                vehicleCount++;
 
-                if (!result.farms[farmId]) {
-                    result.farms[farmId] = {
-                        count: 0,
-                        totalValue: 0,
-                        totalOperatingHours: 0,
-                        vehicles: []
-                    };
-                }
-
-                result.farms[farmId].count++;
-                result.farms[farmId].totalValue += price;
-                result.farms[farmId].totalOperatingHours += operatingTime;
-                result.farms[farmId].vehicles.push(vehicle);
-
-                if (!result.categories[category]) {
-                    result.categories[category] = 0;
-                }
-                result.categories[category]++;
+                log(`  ✅ ${name}: €${price.toFixed(0)}, ${(operatingTime / 3600).toFixed(1)}h`);
             }
 
-            if (logger) logger.debug(`Total vehicles parsed: ${vehicleCount}`);
-            if (logger) logger.debug(`Categories:`, result.categories);
-            if (logger) logger.debug('=== VEHICLES XML PARSED ===');
+            // ═══════════════════════════════════════════════════════════
+            // FORMAT OPERATING TIME (Stunden)
+            // ═══════════════════════════════════════════════════════════
+            
+            const totalHours = totalOperatingTime / 3600; // Convert seconds to hours
+            const formattedOperatingTime = this.formatPlayTime(totalHours);
 
-            return result;
+            // ═══════════════════════════════════════════════════════════
+            // SUMMARY
+            // ═══════════════════════════════════════════════════════════
+            
+            log('═══════════════════════════════════════════════════════════');
+            log(`✅ Vehicles Parsed: ${vehicleCount}`);
+            log(`🚂 Trains Skipped: ${trainCount}`);
+            log(`💰 Total Price: €${totalPrice.toFixed(0)}`);
+            log(`⏱️  Total Operating Time: ${formattedOperatingTime} (${totalHours.toFixed(1)}h)`);
+            log('═══════════════════════════════════════════════════════════');
 
-        } catch (e) {
-            console.error('Vehicles XML Parse Error:', e);
-            return { total: 0, totalValue: 0, farms: {}, vehicles: [], categories: {} };
+            // ═══════════════════════════════════════════════════════════
+            // FIXED: Return count instead of totalVehicles
+            // ═══════════════════════════════════════════════════════════
+            return {
+                vehicles: vehicles,
+                count: vehicleCount, // PRIMARY: Used by embed
+                totalVehicles: vehicleCount, // Backward compatibility
+                totalPrice: totalPrice,
+                totalOperatingTime: totalOperatingTime,
+                totalOperatingTimeFormatted: formattedOperatingTime,
+                trainsSkipped: trainCount
+            };
+
+        } catch (err) {
+            if (logger) {
+                logger.error(`❌ Vehicles XML Parsing FAILED: ${err.message}`, 'vehicles');
+            } else {
+                console.error('❌ Vehicles XML Parsing FAILED:', err);
+            }
+            return {
+                vehicles: [],
+                count: 0, // PRIMARY
+                totalVehicles: 0, // Backward compatibility
+                totalPrice: 0,
+                totalOperatingTime: 0,
+                totalOperatingTimeFormatted: 'N/A',
+                trainsSkipped: 0
+            };
         }
     }
 
@@ -688,8 +720,8 @@ static formatSaveDate(dateStr) {
      */
     static parseEconomyXml(xml, logger = null) {
         try {
-            if (logger) logger.debug('=== PARSING ECONOMY XML ===');
-            if (logger) logger.debug('XML Length:', xml.length);
+            if (logger) logger.debug('=== PARSING ECONOMY XML ===', 'economy');
+            if (logger) logger.debug(`XML Length: ${xml.length}`, 'economy');
             
             const result = {
                 greatDemands: [],
@@ -697,15 +729,15 @@ static formatSaveDate(dateStr) {
             };
 
             const demandTagMatches = xml.matchAll(/<greatDemand\s+([^>]+)\/?>/gi);
-            if (logger) logger.debug('Looking for greatDemand tags...');
+            if (logger) logger.debug('Looking for greatDemand tags...', 'economy');
             let demandCount = 0;
             
             for (const tagMatch of demandTagMatches) {
                 demandCount++;
                 const attributes = tagMatch[1];
                 
-                if (logger) logger.debug(`\n  Demand #${demandCount}:`);
-                if (logger) logger.debug(`    Attributes: ${attributes.substring(0, 100)}...`);
+                if (logger) logger.debug(`\n  Demand #${demandCount}:`, 'economy');
+                if (logger) logger.debug(`    Attributes: ${attributes.substring(0, 100)}...`, 'economy');
                 
                 const fillTypeMatch = attributes.match(/fillTypeName="([^"]+)"/);
                 const durationMatch = attributes.match(/demandDuration="([^"]+)"/);
@@ -718,10 +750,10 @@ static formatSaveDate(dateStr) {
                     const isRunning = isRunningMatch[1];
                     const multiplier = parseFloat(multiplierMatch[1]);
                     
-                    if (logger) logger.debug(`    FillType: ${fillType}`);
-                    if (logger) logger.debug(`    Duration: ${duration}h`);
-                    if (logger) logger.debug(`    IsRunning: ${isRunning}`);
-                    if (logger) logger.debug(`    Multiplier: ${multiplier}`);
+                    if (logger) logger.debug(`    FillType: ${fillType}`, 'economy');
+                    if (logger) logger.debug(`    Duration: ${duration}h`, 'economy');
+                    if (logger) logger.debug(`    IsRunning: ${isRunning}`, 'economy');
+                    if (logger) logger.debug(`    Multiplier: ${multiplier}`, 'economy');
                     
                     if (isRunning === 'true') {
                         const demand = {
@@ -732,20 +764,20 @@ static formatSaveDate(dateStr) {
                             bonusPercent: Math.round((multiplier - 1) * 100)
                         };
                         result.greatDemands.push(demand);
-                        if (logger) logger.debug(`    ✅ ADDED TO RESULT (Bonus: +${demand.bonusPercent}%)`);
+                        if (logger) logger.debug(`    ✅ ADDED TO RESULT (Bonus: +${demand.bonusPercent}%)`, 'economy');
                     } else {
-                        if (logger) logger.debug(`    ⏸️ SKIPPED (not running)`);
+                        if (logger) logger.debug(`    ⏸️ SKIPPED (not running)`, 'economy');
                     }
                 } else {
-                    if (logger) logger.debug(`    ⚠️ MISSING ATTRIBUTES - Skipped`);
+                    if (logger) logger.debug(`    ⚠️ MISSING ATTRIBUTES - Skipped`, 'economy');
                 }
             }
             
-            if (logger) logger.debug(`Total demands found: ${demandCount}`);
-            if (logger) logger.debug(`Active demands: ${result.greatDemands.length}`);
+            if (logger) logger.debug(`Total demands found: ${demandCount}`, 'economy');
+            if (logger) logger.debug(`Active demands: ${result.greatDemands.length}`, 'economy');
 
             const fillTypeMatches = xml.matchAll(/<fillType\s+fillType="([^"]+)"[^>]*>([\s\S]*?)<\/fillType>/gi);
-            if (logger) logger.debug('Looking for fillType prices...');
+            if (logger) logger.debug('Looking for fillType prices...', 'economy');
             let priceCount = 0;
             
             for (const match of fillTypeMatches) {
@@ -766,8 +798,8 @@ static formatSaveDate(dateStr) {
                 }
             }
             
-            if (logger) logger.debug(`Prices extracted: ${priceCount} crops`);
-            if (logger) logger.debug('=== ECONOMY XML PARSED ===');
+            if (logger) logger.debug(`Prices extracted: ${priceCount} crops`, 'economy');
+            if (logger) logger.debug('=== ECONOMY XML PARSED ===', 'economy');
             return result;
         } catch (e) {
             console.error('❌ Economy XML Parse Error:', e);
