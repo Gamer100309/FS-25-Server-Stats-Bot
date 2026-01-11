@@ -608,9 +608,7 @@ class SetupMenus {
     }
 
     // ═══════════════════════════════════════════════════════════
-	//  SETUP MENUS - BUTTON OPTIONS (NUR PLAYERS)
-	//  SUCHE in SetupMenus.js nach: createButtonOptionsMenu
-	//  ERSETZE die komplette Methode
+	//  SETUP MENUS - BUTTON OPTIONS
 	// ═══════════════════════════════════════════════════════════
 
 	createButtonOptionsMenu(serverIdx, srv, gcfg = null) {
@@ -647,7 +645,7 @@ class SetupMenus {
 							label: toggleLabel,
 							description: toggleDesc,
 							value: 'toggle',
-							emoji: toggleEmoji
+							emoji: `😎`
 						},
 						{ 
 							label: this.getText('setup.buttons.options.players.label', {}, gcfg),
@@ -1011,8 +1009,6 @@ class SetupMenus {
 
     // ═══════════════════════════════════════════════════════════
 //  SERVER EDIT MENU - 3 OPTIONEN
-//  FÜR SetupMenus.js
-//  ERSETZE die Methode: createServerEditOptionsMenu
 // ═══════════════════════════════════════════════════════════
 
     /**
@@ -1037,6 +1033,12 @@ class SetupMenus {
                             value: 'weitere_links',
                             emoji: '🔗'
                         },
+						{
+							label: '🔐 Server Password',
+							description: 'Set the server password to display in embed',
+							value: 'server_password',
+							emoji: '🔐'
+						},
                         {
                             label: this.getText('setup.serverEdit.options.farmNames.label', {}, srv, gcfg) || 'Farm-Namen',
                             description: this.getText('setup.serverEdit.options.farmNames.description', {}, srv, gcfg) || 'Farms umbenennen',
