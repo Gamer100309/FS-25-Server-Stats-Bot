@@ -1,6 +1,7 @@
 // ═══════════════════════════════════════════════════════════
 //  CONFIG MANAGER MODULE
 //  Enhanced with Multi-Language Text System
+//  Updated with modern FS config structure
 // ═══════════════════════════════════════════════════════════
 
 const fs = require('fs');
@@ -36,32 +37,91 @@ class ConfigManager {
     }
 
     loadGlobal() {
-        try {
-            if (fs.existsSync('./global-config.json')) {
-                return JSON.parse(fs.readFileSync('./global-config.json', 'utf8'));
-            }
-        } catch (e) {}
+		try {
+			if (fs.existsSync('./global-config.json')) {
+				const content = fs.readFileSync('./global-config.json', 'utf8');
+				return JSON.parse(content);
+			}
+		} catch (e) {
+			// ✅ FEHLER LOGGEN STATT IGNORIEREN!
+			console.error('❌ ERROR: global-config.json is invalid!');
+			console.error(`Error: ${e.message}`);
+			console.error('Please fix the JSON syntax or delete the file to regenerate.');
+			process.exit(1);  // ← STOPPEN statt überschreiben!
+		}
         
         const def = {
-            token: "DEIN_BOT_TOKEN",
+            token: "YOUR_BOT_TOKEN_HERE",
             verboseLogging: false,
+            globalSettings: {
+                verboseMode: false,
+                debugMode: false
+            },
+            debugFilters: {
+                career: true,
+                vehicles: true,
+                economy: true,
+                network: true,
+                embed: true,
+                monitoring: true,
+                interaction: true,
+                setup: true,
+                general: true
+            },
+            debugModules: {
+                enabled: false,
+                modules: [],
+                stopOnError: false
+            },
             defaults: {
                 updateInterval: 10000,
-                embedColors: { online: "#00FF00", offline: "#FF0000" },
+                embedColors: {
+                    online: "#00FF00",
+                    offline: "#FF0000"
+                },
                 defaultEmojis: {
-                    online: "🟢", offline: "🔴", ip: "🌐", version: "⚙️",
-                    players: "👥", ping: "📶", port: "🔑", playerList: "👤", motd: "📢"
+                    online: "🟢",
+                    offline: "🔴",
+                    map: "🗺️",
+                    version: "⚙️",
+                    password: "🔒",
+                    players: "👥",
+                    mods: "🔧",
+                    vehicles: "🚜",
+                    money: "💰",
+                    difficulty: "⚡",
+                    timeScale: "⏱️",
+                    playerList: "👤",
+                    playTime: "🕐",
+                    currentDate: "📅",
+                    saveDate: "💾",
+                    growthRate: "🌱",
+                    fieldJobs: "📋",
+                    autoSave: "💾",
+                    resetVehicles: "🔄",
+                    savegameName: "📝",
+                    creationDate: "🛠️",
+                    traffic: "🚦",
+                    weeds: "🌱",
+                    fruitDestruction: "🌾",
+                    snow: "❄️",
+                    stones: "🪨",
+                    fuelUsage: "⛽",
+                    loan: "🏦",
+                    initialMoney: "💼",
+                    helperFuel: "🛢️",
+                    helperSeeds: "🌾",
+                    helperFertilizer: "💊",
+                    mapScreenshot: "🖼️",
+                    greatDemands: "🔥"
                 },
                 defaultButtonMessages: {
-                    ipMessage: "📋 **Server IP:**\n```\n{ip}\n```\n**Zum Kopieren:** Text markieren und STRG+C",
-                    portMessage: "🔑 **Server Port:**\n```\n{port}\n```\n**Zum Kopieren:** Text markieren und STRG+C",
                     playersMessage: "👥 **Online Spieler ({count}/{max}):**\n```\n{players}\n```"
                 },
                 setupPermissions: {
                     allowAdministrator: true,
                     allowedRoles: []
                 },
-                // NEU: Text-System Defaults
                 textSettings: {
                     defaultLanguage: "en",
                     allowCustomTexts: true
@@ -123,6 +183,43 @@ class ConfigManager {
                         this.saveGuild(guildId, config);
                     }
                 }
+				
+				// Migration: Füge Field Rotation zu embedSettings hinzu falls nicht vorhanden
+				if (config.servers) {
+					let needsSave = false;
+					config.servers.forEach(srv => {
+						if (!srv.embedSettings) {
+							srv.embedSettings = {};
+							needsSave = true;
+						}
+						if (srv.embedSettings.enableFieldRotation === undefined) {
+							srv.embedSettings.enableFieldRotation = false; // Default: OFF
+							srv.embedSettings.currentFieldRotationIndex = 0;
+							needsSave = true;
+						}
+					});
+					if (needsSave) {
+						this.saveGuild(guildId, config);
+					}
+				}
+				
+				// Migration: Füge hasNoPassword zu embedSettings hinzu falls nicht vorhanden
+				if (config.servers) {
+					let needsSave = false;
+					config.servers.forEach(srv => {
+						if (!srv.embedSettings) {
+							srv.embedSettings = {};
+							needsSave = true;
+						}
+						if (srv.embedSettings.hasNoPassword === undefined) {
+							srv.embedSettings.hasNoPassword = false; // Default: OFF
+							needsSave = true;
+						}
+					});
+					if (needsSave) {
+						this.saveGuild(guildId, config);
+					}
+				}
 				
                 return config;
             } catch (e) {

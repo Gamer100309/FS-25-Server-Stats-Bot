@@ -8,7 +8,6 @@ const { PermissionManager } = require('./PermissionManager');
 const { SetupMenus } = require('./SetupMenus');
 const { VehicleMenus } = require('./VehicleMenus');
 const { StatusChecker } = require('./StatusChecker');
-const { IconManager } = require('./IconManager');
 
 class CommandHandler {
     constructor(client, configManager, logger, monitoringManager, messageHandler) {
@@ -347,7 +346,7 @@ class CommandHandler {
     async handleVehiclesCommand(interaction, gcfg) {
         try {
             // Defer reply since fetching data might take a moment
-            await interaction.deferReply({ ephemeral: false });
+            await interaction.deferReply({ ephemeral: true });
 
             // Find the server config for this guild
             if (gcfg.servers.length === 0) {
@@ -361,8 +360,7 @@ class CommandHandler {
             const srv = gcfg.servers[0];
 
             // Fetch vehicle data
-            const iconMgr = new IconManager(interaction.guildId, this.configManager);
-            const data = await StatusChecker.getStatus(srv, iconMgr);
+            const data = await StatusChecker.getStatus(srv);
 
             if (!data.online || !data.vehicles) {
                 await interaction.editReply({
@@ -373,6 +371,41 @@ class CommandHandler {
 
             // Get farm names from config
             const farmNames = srv.farmNames || {};
+            
+            // AUTO-SAVE: Update farmNames with newly detected farms
+            if (data.vehicles && data.vehicles.vehicles && Array.isArray(data.vehicles.vehicles)) {
+                const detectedFarms = new Set();
+                
+                // Extract unique farm IDs from vehicles
+                data.vehicles.vehicles.forEach(vehicle => {
+                    if (vehicle.farmId !== undefined && vehicle.farmId !== null) {
+                        const farmId = String(vehicle.farmId);
+                        // Skip Farm 0 (map assets like trains)
+                        if (farmId !== '0') {
+                            detectedFarms.add(farmId);
+                        }
+                    }
+                });
+                
+                // Add new farms to config
+                let updated = false;
+                detectedFarms.forEach(farmId => {
+                    if (!farmNames[farmId]) {
+                        farmNames[farmId] = `Farm ${farmId}`;
+                        updated = true;
+                    }
+                });
+                
+                // Save to config if farms were added
+                if (updated) {
+                    srv.farmNames = farmNames;
+                    this.configManager.saveGuild(interaction.guildId, gcfg);
+                    if (this.logger) {
+                        this.logger.verbose(`Auto-saved ${detectedFarms.size} farm names for ${srv.serverName}`);
+                    }
+                }
+            }
+
 
             // Create main menu
             const embed = this.vehicleMenus.createMainMenu(data.vehicles, gcfg);

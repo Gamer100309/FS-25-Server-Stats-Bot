@@ -6,6 +6,8 @@
 // ═══════════════════════════════════════════════════════════
 
 const { Client, GatewayIntentBits } = require('discord.js');
+const fs = require('fs');
+const path = require('path');
 const { Logger } = require('./cogs/Logger');
 const { ConfigManager } = require('./cogs/ConfigManager');
 const { MessageHandler } = require('./cogs/MessageHandler');
@@ -16,16 +18,87 @@ const { AlertManager } = require('./cogs/AlertManager');
 const { VehicleMenus } = require('./cogs/VehicleMenus');
 
 // ═══════════════════════════════════════════════════════════
+// DEBUG Modules
+// ═══════════════════════════════════════════════════════════
+const debugModules = [];
+
+function loadDebugModules(logger) {
+    const config = require('./global-config.json');
+    
+    if (!config.debugModules || !config.debugModules.enabled) {
+        logger.debug('Debug modules: DISABLED', 'general');
+        return;
+    }
+    
+    const modulesDir = './cogs/debug-modules';
+    
+    // Check if directory exists
+    if (!fs.existsSync(modulesDir)) {
+        logger.warn('Debug modules folder not found - creating...', 'general');
+        fs.mkdirSync(modulesDir, { recursive: true });
+        logger.info('📁 Created: /cogs/debug-modules/', 'general');
+        logger.info('ℹ️  Place debug modules here and enable in config', 'general');
+        return;
+    }
+    
+    // Check if empty
+    const files = fs.readdirSync(modulesDir).filter(f => f.endsWith('.js'));
+    
+    if (files.length === 0) {
+        logger.info('[DEBUG:MODULES] No debug modules found', 'general');
+        return;
+    }
+    
+    // Load modules
+    logger.info(`[DEBUG:MODULES] Loading ${files.length} modules...`, 'general');
+    
+    const requestedModules = config.debugModules.modules || [];
+    
+    files.forEach(file => {
+        const moduleName = file.replace('.js', '');
+        
+        // Skip if not requested
+        if (requestedModules.length > 0 && !requestedModules.includes(moduleName)) {
+            logger.debug(`[DEBUG:MODULES] SKIP: ${moduleName} (not in config)`, 'general');
+            return;
+        }
+        
+        try {
+			const modulePath = path.resolve(__dirname, modulesDir, file);
+			const module = require(modulePath);
+            debugModules.push({ name: moduleName, module });
+            logger.success(`[DEBUG:MODULES] ✅ Loaded: ${moduleName}`, 'general');
+        } catch (e) {
+            logger.error(`[DEBUG:MODULES] ❌ SKIP: ${moduleName} (${e.message})`, 'general');
+            
+            if (config.debugModules.stopOnError) {
+                throw e;
+            }
+        }
+    });
+    
+    logger.success(`[DEBUG:MODULES] ${debugModules.length} modules ready!`, 'general');
+}
+
+// ═══════════════════════════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════════════════════════
 
 const configManager = new ConfigManager();
-const logger = new Logger('./logs', configManager.globalConfig.verboseLogging);
+const gcfg = configManager.globalConfig;
+const debugFilters = gcfg.debugFilters || {};
+const verboseMode = gcfg.globalSettings?.verboseMode || false;
+const debugMode = gcfg.globalSettings?.debugMode || false;
+const logger = new Logger('./logs', verboseMode, debugMode, debugFilters);
 const messageHandler = new MessageHandler();
+
+loadDebugModules(logger);
+global.debugModules = debugModules;
 
 logger.info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 logger.info('   🚜 FS STATUS BOT v1.0 - MULTI-GUILD');
 logger.info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+logger.logConfig();
 
 const client = new Client({
     intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages]

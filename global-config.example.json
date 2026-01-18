@@ -1,6 +1,26 @@
 {
   "token": "YOUR_BOT_TOKEN_HERE",
   "verboseLogging": false,
+  "globalSettings": {
+    "verboseMode": false,
+    "debugMode": false
+  },
+  "debugFilters": {
+    "career": true,
+    "vehicles": true,
+    "economy": true,
+    "network": true,
+    "embed": true,
+    "monitoring": true,
+    "interaction": true,
+    "setup": true,
+    "general": true
+  },
+  "debugModules": {
+    "enabled": false,
+    "modules": [],
+    "stopOnError": false
+  },
   "defaults": {
     "updateInterval": 10000,
     "embedColors": {
@@ -8,21 +28,43 @@
       "offline": "#FF0000"
     },
     "defaultEmojis": {
-	  "online": "🟢",
-	  "offline": "🔴",
-	  "map": "🗺️",
-	  "version": "⚙️",
-	  "password": "🔒",
-	  "players": "👥",
-	  "mods": "🔧",
-	  "vehicles": "🚜",
-	  "money": "💰",
-	  "difficulty": "⚡",
-	  "timeScale": "⏱️",
-	  "playerList": "👤"
-	},
+      "online": "🟢",
+      "offline": "🔴",
+      "map": "🗺️",
+      "version": "⚙️",
+      "password": "🔒",
+      "players": "👥",
+      "mods": "🔧",
+      "vehicles": "🚜",
+      "money": "💰",
+      "difficulty": "⚡",
+      "timeScale": "⏱️",
+      "playerList": "👤",
+      "playTime": "🕐",
+      "currentDate": "📅",
+      "saveDate": "💾",
+      "growthRate": "🌱",
+      "fieldJobs": "📋",
+      "autoSave": "💾",
+      "resetVehicles": "🔄",
+      "savegameName": "📝",
+      "creationDate": "🛠️",
+      "traffic": "🚦",
+      "weeds": "🌱",
+      "fruitDestruction": "🌾",
+      "snow": "❄️",
+      "stones": "🪨",
+      "fuelUsage": "⛽",
+      "loan": "🏦",
+      "initialMoney": "💼",
+      "helperFuel": "🛢️",
+      "helperSeeds": "🌾",
+      "helperFertilizer": "💊",
+      "mapScreenshot": "🖼️",
+      "greatDemands": "🔥"
+    },
     "defaultButtonMessages": {
-      "playersMessage": "👥 **Online Players ({count}/{max}):**\n```\n{players}\n```"
+      "playersMessage": "👥 **Online Spieler ({count}/{max}):**\n```\n{players}\n```"
     },
     "setupPermissions": {
       "allowAdministrator": true,

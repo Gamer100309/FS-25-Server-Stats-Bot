@@ -73,7 +73,15 @@ class SetupMenus {
     }
 
     createMainMenuSelect(gcfg = null) {
-        return new ActionRowBuilder()
+		// DEBUG: Zeige was getText zurückgibt
+	//	console.log('🔍 PERMISSIONS EMOJI DEBUG:', this.getText('setup.mainMenu.categories.permissions.emoji', {}, gcfg));
+    //    const permEmoji = this.getText('setup.mainMenu.categories.permissions.emoji', {}, gcfg);
+	//	console.log('🔍 PERMISSIONS EMOJI DEBUG:', permEmoji);
+	//	console.log('🔍 EMOJI BYTES:', Buffer.from(permEmoji, 'utf8').toString('hex'));
+	//	console.log('🔍 EMOJI LENGTH:', permEmoji.length);
+	//	console.log('🔍 CODEPOINTS:', [...permEmoji].map(c => 'U+' + c.charCodeAt(0).toString(16).toUpperCase()).join(' '));
+		
+		return new ActionRowBuilder()
             .addComponents(
                 new StringSelectMenuBuilder()
                     .setCustomId('setup_main_menu')
@@ -83,43 +91,43 @@ class SetupMenus {
                             label: this.getText('setup.mainMenu.categories.servers.label', {}, gcfg),
                             description: this.getText('setup.mainMenu.categories.servers.description', {}, gcfg),
                             value: 'servers',
-                            emoji: this.getText('setup.mainMenu.categories.servers.emoji', {}, gcfg)
+                            emoji: this.getText('setup.mainMenu.categories.servers.emoji', {}, gcfg) || '😮'
                         },
                         {
                             label: this.getText('setup.mainMenu.categories.intervals.label', {}, gcfg),
                             description: this.getText('setup.mainMenu.categories.intervals.description', {}, gcfg),
                             value: 'intervals',
-                            emoji: this.getText('setup.mainMenu.categories.intervals.emoji', {}, gcfg)
+                            emoji: this.getText('setup.mainMenu.categories.intervals.emoji', {}, gcfg) || '😮'
                         },
                         {
                             label: this.getText('setup.mainMenu.categories.embed.label', {}, gcfg),
                             description: this.getText('setup.mainMenu.categories.embed.description', {}, gcfg),
                             value: 'embed',
-                            emoji: this.getText('setup.mainMenu.categories.embed.emoji', {}, gcfg)
+                            emoji: this.getText('setup.mainMenu.categories.embed.emoji', {}, gcfg) || '😮'
                         },
                         {
                             label: this.getText('setup.mainMenu.categories.buttons.label', {}, gcfg),
                             description: this.getText('setup.mainMenu.categories.buttons.description', {}, gcfg),
                             value: 'buttons',
-                            emoji: this.getText('setup.mainMenu.categories.buttons.emoji', {}, gcfg)
+                            emoji: this.getText('setup.mainMenu.categories.buttons.emoji', {}, gcfg) || '😮'
                         },
                         {
                             label: this.getText('setup.mainMenu.categories.permissions.label', {}, gcfg),
                             description: this.getText('setup.mainMenu.categories.permissions.description', {}, gcfg),
                             value: 'permissions',
-                            emoji: this.getText('setup.mainMenu.categories.permissions.emoji', {}, gcfg)
+                            emoji: this.getText('setup.mainMenu.categories.permissions.emoji', {}, gcfg) || '😮'
                         },
-                        {
+						{
                             label: this.getText('setup.mainMenu.categories.global.label', {}, gcfg),
                             description: this.getText('setup.mainMenu.categories.global.description', {}, gcfg),
                             value: 'global',
-                            emoji: this.getText('setup.mainMenu.categories.global.emoji', {}, gcfg)
+                            emoji: this.getText('setup.mainMenu.categories.global.emoji', {}, gcfg) || '😮'
                         },
                         {
                             label: this.getText('setup.mainMenu.categories.texts.label', {}, gcfg),
                             description: this.getText('setup.mainMenu.categories.texts.description', {}, gcfg),
                             value: 'texts',
-                            emoji: this.getText('setup.mainMenu.categories.texts.emoji', {}, gcfg)
+                            emoji: this.getText('setup.mainMenu.categories.texts.emoji', {}, gcfg) || '😮'
                         }
                     ])
             );
@@ -169,31 +177,31 @@ class SetupMenus {
                             label: this.getText('setup.serverManagement.actions.add.label', {}, gcfg),
                             description: this.getText('setup.serverManagement.actions.add.description', {}, gcfg),
                             value: 'add',
-                            emoji: this.getText('setup.serverManagement.actions.add.emoji', {}, gcfg)
+                            emoji: this.getText('setup.serverManagement.actions.add.emoji', {}, gcfg) || '😮'
                         },
                         {
                             label: this.getText('setup.serverManagement.actions.edit.label', {}, gcfg),
                             description: this.getText('setup.serverManagement.actions.edit.description', {}, gcfg),
                             value: 'edit',
-                            emoji: this.getText('setup.serverManagement.actions.edit.emoji', {}, gcfg)
+                            emoji: this.getText('setup.serverManagement.actions.edit.emoji', {}, gcfg) || '😮'
                         },
                         {
                             label: this.getText('setup.serverManagement.actions.delete.label', {}, gcfg),
                             description: this.getText('setup.serverManagement.actions.delete.description', {}, gcfg),
                             value: 'delete',
-                            emoji: this.getText('setup.serverManagement.actions.delete.emoji', {}, gcfg)
+                            emoji: this.getText('setup.serverManagement.actions.delete.emoji', {}, gcfg) || '😮'
                         },
 						{
                             label: this.getText('setup.serverManagement.actions.toggle.label', {}, gcfg),
                             description: this.getText('setup.serverManagement.actions.toggle.description', {}, gcfg),
                             value: 'toggle',
-                            emoji: this.getText('setup.serverManagement.actions.toggle.emoji', {}, gcfg)
+                            emoji: this.getText('setup.serverManagement.actions.toggle.emoji', {}, gcfg) || '😮'
                         },
                         {
                             label: this.getText('setup.serverManagement.actions.back.label', {}, gcfg),
                             description: this.getText('setup.serverManagement.actions.back.description', {}, gcfg),
                             value: 'back',
-                            emoji: this.getText('setup.serverManagement.actions.back.emoji', {}, gcfg)
+                            emoji: this.getText('setup.common.backEmoji', {}, gcfg) || '😮'
                         }
                     ])
             );
@@ -252,7 +260,7 @@ class SetupMenus {
                         .addOptions([{
                             label: this.getText('setup.common.backToMain', {}, gcfg),
                             value: 'back',
-                            emoji: '↩️'
+                            emoji: '↩'
                         }])
                 );
         }
@@ -285,7 +293,7 @@ class SetupMenus {
                 label: this.getText('setup.serverManagement.toggle.allOn.label', {}, gcfg),
                 description: this.getText('setup.serverManagement.toggle.allOn.description', {}, gcfg),
                 value: 'all_on',
-                emoji: this.getText('setup.serverManagement.toggle.allOn.emoji', {}, gcfg) || '✅'
+                emoji: this.getText('setup.serverManagement.toggle.allOn.emoji', {}, gcfg) || '😮'
             });
         }
 
@@ -295,7 +303,7 @@ class SetupMenus {
                 label: this.getText('setup.serverManagement.toggle.allOff.label', {}, gcfg),
                 description: this.getText('setup.serverManagement.toggle.allOff.description', {}, gcfg),
                 value: 'all_off',
-                emoji: this.getText('setup.serverManagement.toggle.allOff.emoji', {}, gcfg) || '⏸️'
+                emoji: this.getText('setup.serverManagement.toggle.allOff.emoji', {}, gcfg) || '😮'
             });
         }
 
@@ -313,7 +321,7 @@ class SetupMenus {
         // EINZELNE SERVER
         // ═══════════════════════════════════════════════════════════
         servers.forEach((srv, i) => {
-            const status = srv.monitoringEnabled !== false ? '✅' : '⏸️';
+            const status = srv.monitoringEnabled !== false ? '✅' : '⏸';
             const statusText = srv.monitoringEnabled !== false 
                 ? this.getText('setup.serverManagement.toggle.active', {}, gcfg)
                 : this.getText('setup.serverManagement.toggle.paused', {}, gcfg);
@@ -332,7 +340,7 @@ class SetupMenus {
         options.push({
             label: this.getText('setup.common.backToMain', {}, gcfg),
             value: 'back',
-            emoji: '↩️'
+            emoji: '↩'
         });
 
         return new ActionRowBuilder()
@@ -381,7 +389,7 @@ class SetupMenus {
                         .addOptions([{
                             label: this.getText('setup.common.backToMain', {}, gcfg),
                             value: 'back',
-                            emoji: '↩️'
+                            emoji: '↩'
                         }])
                 );
         }
@@ -403,7 +411,7 @@ class SetupMenus {
                         {
                             label: this.getText('setup.common.backToMain', {}, gcfg),
                             value: 'back',
-                            emoji: '↩️'
+                            emoji: '↩'
                         }
                     ])
             );
@@ -420,36 +428,36 @@ class SetupMenus {
                             label: this.getText('setup.intervals.options.5s.label', {}, gcfg), 
                             description: this.getText('setup.intervals.options.5s.description', {}, gcfg), 
                             value: '5000', 
-                            emoji: this.getText('setup.intervals.options.5s.emoji', {}, gcfg)
+                            emoji: this.getText('setup.intervals.options.5s.emoji', {}, gcfg) || '😮'
                         },
                         { 
                             label: this.getText('setup.intervals.options.10s.label', {}, gcfg), 
                             description: this.getText('setup.intervals.options.10s.description', {}, gcfg), 
                             value: '10000', 
-                            emoji: this.getText('setup.intervals.options.10s.emoji', {}, gcfg)
+                            emoji: this.getText('setup.intervals.options.10s.emoji', {}, gcfg) || '😮'
                         },
                         { 
                             label: this.getText('setup.intervals.options.30s.label', {}, gcfg), 
                             description: this.getText('setup.intervals.options.30s.description', {}, gcfg), 
                             value: '30000', 
-                            emoji: this.getText('setup.intervals.options.30s.emoji', {}, gcfg)
+                            emoji: this.getText('setup.intervals.options.30s.emoji', {}, gcfg) || '😮'
                         },
                         { 
                             label: this.getText('setup.intervals.options.1m.label', {}, gcfg), 
                             description: this.getText('setup.intervals.options.1m.description', {}, gcfg), 
                             value: '60000', 
-                            emoji: this.getText('setup.intervals.options.1m.emoji', {}, gcfg)
+                            emoji: this.getText('setup.intervals.options.1m.emoji', {}, gcfg) || '😮'
                         },
                         { 
                             label: this.getText('setup.intervals.options.5m.label', {}, gcfg), 
                             description: this.getText('setup.intervals.options.5m.description', {}, gcfg), 
                             value: '300000', 
-                            emoji: this.getText('setup.intervals.options.5m.emoji', {}, gcfg)
+                            emoji: this.getText('setup.intervals.options.5m.emoji', {}, gcfg) || '😮'
                         },
                         { 
                             label: this.getText('setup.common.back', {}, gcfg), 
                             value: 'back', 
-                            emoji: '↩️' 
+                            emoji: '↩' 
                         }
                     ])
             );
@@ -490,7 +498,7 @@ class SetupMenus {
                         .addOptions([{
                             label: this.getText('setup.common.backToMain', {}, gcfg),
                             value: 'back',
-                            emoji: '↩️'
+                            emoji: '↩'
                         }])
                 );
         }
@@ -510,46 +518,55 @@ class SetupMenus {
                         {
                             label: this.getText('setup.common.backToMain', {}, gcfg),
                             value: 'back',
-                            emoji: '↩️'
+                            emoji: '↩'
                         }
                     ])
             );
     }
 
     // ═══════════════════════════════════════════════════════════
-	//  SETUP MENUS - EMBED DESIGN OPTIONS (OHNE ICON)
-	//  SUCHE in SetupMenus.js nach: createEmbedOptionsMenu
-	//  ERSETZE die komplette Methode
+	//  SETUP MENUS - EMBED DESIGN OPTIONS
 	// ═══════════════════════════════════════════════════════════
 
 	createEmbedOptionsMenu(serverIdx, gcfg = null) {
-		return new ActionRowBuilder()
-			.addComponents(
-				new StringSelectMenuBuilder()
-					.setCustomId(`setup_embed_option_${serverIdx}`)
-					.setPlaceholder(this.getText('setup.embedDesign.designOptions.placeholder', {}, gcfg))
-					.addOptions([
-						{ 
-							label: this.getText('setup.embedDesign.designOptions.colors.label', {}, gcfg), 
-							description: this.getText('setup.embedDesign.designOptions.colors.description', {}, gcfg), 
-							value: 'colors', 
-							emoji: this.getText('setup.embedDesign.designOptions.colors.emoji', {}, gcfg)
-						},
-						{ 
-							label: this.getText('setup.embedDesign.designOptions.fields.label', {}, gcfg), 
-							description: this.getText('setup.embedDesign.designOptions.fields.description', {}, gcfg), 
-							value: 'fields', 
-							emoji: this.getText('setup.embedDesign.designOptions.fields.emoji', {}, gcfg)
-						},
-						// ⭐ ICON OPTION ENTFERNT - FS Server haben keine Icons!
-						{ 
-							label: this.getText('setup.common.back', {}, gcfg), 
-							value: 'back', 
-							emoji: '↩️' 
-						}
-					])
-			);
-	}
+    return new ActionRowBuilder()
+        .addComponents(
+            new StringSelectMenuBuilder()
+                .setCustomId(`setup_embed_option_${serverIdx}`)
+                .setPlaceholder(this.getText('setup.embedDesign.designOptions.placeholder', {}, gcfg))
+                .addOptions([
+                    { 
+                        label: this.getText('setup.embedDesign.designOptions.colors.label', {}, gcfg), 
+                        description: this.getText('setup.embedDesign.designOptions.colors.description', {}, gcfg), 
+                        value: 'colors', 
+                        emoji: this.getText('setup.embedDesign.designOptions.colors.emoji', {}, gcfg) || '😮'
+                    },
+                    { 
+                        label: this.getText('setup.embedDesign.designOptions.fields.label', {}, gcfg), 
+                        description: this.getText('setup.embedDesign.designOptions.fields.description', {}, gcfg), 
+                        value: 'fields', 
+                        emoji: this.getText('setup.embedDesign.designOptions.fields.emoji', {}, gcfg) || '😮'
+                    },
+                    { 
+                        label: 'Password Einstellungen', 
+                        description: 'Feld zeigen, Spoiler aktivieren', 
+                        value: 'password', 
+                        emoji: '🔒'
+                    },
+                    { 
+                        label: '🔄 Field Rotation', 
+                        description: 'Rotate through >25 fields automatically', 
+                        value: 'field_rotation', 
+                        emoji: '🔄'
+                    },
+                    { 
+                        label: this.getText('setup.common.back', {}, gcfg), 
+                        value: 'back', 
+                        emoji: '↩' 
+                    }
+                ])
+        );
+}
 
     // ═══════════════════════════════════════════════════════════
     // BUTTONS
@@ -578,7 +595,7 @@ class SetupMenus {
                         .addOptions([{
                             label: this.getText('setup.common.backToMain', {}, gcfg),
                             value: 'back',
-                            emoji: '↩️'
+                            emoji: '↩'
                         }])
                 );
         }
@@ -598,16 +615,14 @@ class SetupMenus {
                         {
                             label: this.getText('setup.common.backToMain', {}, gcfg),
                             value: 'back',
-                            emoji: '↩️'
+                            emoji: '↩'
                         }
                     ])
             );
     }
 
     // ═══════════════════════════════════════════════════════════
-	//  SETUP MENUS - BUTTON OPTIONS (NUR PLAYERS)
-	//  SUCHE in SetupMenus.js nach: createButtonOptionsMenu
-	//  ERSETZE die komplette Methode
+	//  SETUP MENUS - BUTTON OPTIONS
 	// ═══════════════════════════════════════════════════════════
 
 	createButtonOptionsMenu(serverIdx, srv, gcfg = null) {
@@ -623,8 +638,7 @@ class SetupMenus {
 			: this.getText('setup.buttons.options.toggle.descriptionEnable', {}, gcfg);
 		
 		const toggleEmoji = enabled
-			? this.getText('setup.buttons.options.toggle.emojiDisable', {}, gcfg)
-			: this.getText('setup.buttons.options.toggle.emojiEnable', {}, gcfg);
+			? '❌' : '✅';
 
 		// ═══════════════════════════════════════════════════════════
 		// NUR PLAYERS BUTTON - IP/PORT ENTFERNT!
@@ -644,18 +658,18 @@ class SetupMenus {
 							label: toggleLabel,
 							description: toggleDesc,
 							value: 'toggle',
-							emoji: toggleEmoji
+							emoji: this.getText('setup.buttons.options.toggle.emojiEnable', {}, gcfg) || '😮'
 						},
 						{ 
 							label: this.getText('setup.buttons.options.players.label', {}, gcfg),
 							description: playersStatus,
 							value: 'players',
-							emoji: this.getText('setup.buttons.options.players.emoji', {}, gcfg)
+							emoji: this.getText('setup.buttons.options.players.emoji', {}, gcfg) || '😮'
 						},
 						{ 
 							label: this.getText('setup.common.back', {}, gcfg), 
 							value: 'back', 
-							emoji: '↩️' 
+							emoji: '↩' 
 						}
 					])
 			);
@@ -699,12 +713,12 @@ class SetupMenus {
                             label: this.getText('setup.permissions.actions.roles.label', {}, gcfg),
                             description: this.getText('setup.permissions.actions.roles.description', {}, gcfg),
                             value: 'roles',
-                            emoji: this.getText('setup.permissions.actions.roles.emoji', {}, gcfg)
+                            emoji: this.getText('setup.permissions.actions.roles.emoji', {}, gcfg) || '😮'
                         },
                         { 
                             label: this.getText('setup.common.backToMain', {}, gcfg), 
                             value: 'back', 
-                            emoji: '↩️' 
+                            emoji: '↩' 
                         }
                     ])
             );
@@ -747,18 +761,18 @@ class SetupMenus {
                             label: this.getText('setup.global.actions.footer.label', {}, gcfg),
                             description: this.getText('setup.global.actions.footer.description', {}, gcfg),
                             value: 'footer',
-                            emoji: this.getText('setup.global.actions.footer.emoji', {}, gcfg)
+                            emoji: this.getText('setup.global.actions.footer.emoji', {}, gcfg) || '😮'
                         },
                         { 
                             label: this.getText('setup.global.actions.colors.label', {}, gcfg),
                             description: this.getText('setup.global.actions.colors.description', {}, gcfg),
                             value: 'colors',
-                            emoji: this.getText('setup.global.actions.colors.emoji', {}, gcfg)
+                            emoji: this.getText('setup.global.actions.colors.emoji', {}, gcfg) || '😮'
                         },
                         { 
                             label: this.getText('setup.common.backToMain', {}, gcfg), 
                             value: 'back', 
-                            emoji: '↩️' 
+                            emoji: '↩' 
                         }
                     ])
             );
@@ -820,18 +834,18 @@ class SetupMenus {
                             label: this.getText('setup.texts.actions.globalLanguage.label', {}, guildConfig),
                             description: this.getText('setup.texts.actions.globalLanguage.description', {}, guildConfig),
                             value: 'global_language',
-                            emoji: this.getText('setup.texts.actions.globalLanguage.emoji', {}, guildConfig)
+                            emoji: this.getText('setup.texts.actions.globalLanguage.emoji', {}, guildConfig) || '😮'
                         },
                         {
                             label: this.getText('setup.texts.actions.serverLanguage.label', {}, guildConfig),
                             description: this.getText('setup.texts.actions.serverLanguage.description', {}, guildConfig),
                             value: 'server_language',
-                            emoji: this.getText('setup.texts.actions.serverLanguage.emoji', {}, guildConfig)
+                            emoji: this.getText('setup.texts.actions.serverLanguage.emoji', {}, guildConfig) || '😮'
                         },
                         {
                             label: this.getText('setup.common.backToMain', {}, guildConfig),
                             value: 'back',
-                            emoji: '↩️'
+                            emoji: '↩'
                         }
                     ])
             );
@@ -873,7 +887,7 @@ class SetupMenus {
         options.push({
             label: this.getText('setup.common.back', {}, guildConfig),
             value: 'back',
-            emoji: '↩️'
+            emoji: '↩'
         });
 
         return new ActionRowBuilder()
@@ -900,7 +914,7 @@ class SetupMenus {
                         .addOptions([{
                             label: this.getText('setup.common.back', {}, guildConfig),
                             value: 'back',
-                            emoji: '↩️'
+                            emoji: '↩'
                         }])
                 );
 
@@ -927,7 +941,7 @@ class SetupMenus {
         options.push({
             label: this.getText('setup.common.back', {}, guildConfig),
             value: 'back',
-            emoji: '↩️'
+            emoji: '↩'
         });
 
         const select = new ActionRowBuilder()
@@ -990,7 +1004,7 @@ class SetupMenus {
         options.push({
             label: this.getText('setup.common.back', {}, guildConfig),
             value: 'back',
-            emoji: '↩️'
+            emoji: '↩'
         });
 
         return new ActionRowBuilder()
@@ -999,6 +1013,204 @@ class SetupMenus {
                     .setCustomId(`setup_server_language_change_${serverIdx}`)
                     .setPlaceholder(this.getText('setup.texts.serverLanguage.placeholder', {}, guildConfig))
                     .addOptions(options)
+            );
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // FARM NAMES MANAGEMENT
+    // ═══════════════════════════════════════════════════════════
+
+    // ═══════════════════════════════════════════════════════════
+//  SERVER EDIT MENU - 3 OPTIONEN
+// ═══════════════════════════════════════════════════════════
+
+    /**
+     * Server Edit Options Menu - 3 Optionen
+     */
+    createServerEditOptionsMenu(serverIdx, srv, gcfg = null) {
+        return new ActionRowBuilder()
+            .addComponents(
+                new StringSelectMenuBuilder()
+                    .setCustomId(`setup_server_edit_${serverIdx}`)
+                    .setPlaceholder(this.getText('setup.serverEdit.placeholder', {}, srv, gcfg) || '✏ Was möchtest du bearbeiten?')
+                    .addOptions([
+                        {
+                            label: this.getText('setup.serverEdit.options.basisInfo.label', {}, srv, gcfg) || 'Basis-Infos',
+                            description: this.getText('setup.serverEdit.options.basisInfo.description', {}, srv, gcfg) || 'Name, Stats URL, Career URL',
+                            value: 'basis_info',
+                            emoji: '📝'
+                        },
+                        {
+                            label: this.getText('setup.serverEdit.options.weitereLinks.label', {}, srv, gcfg) || 'Weitere Links',
+                            description: this.getText('setup.serverEdit.options.weitereLinks.description', {}, srv, gcfg) || 'Vehicles, Economy, Mods, Map',
+                            value: 'weitere_links',
+                            emoji: '🔗'
+                        },
+						{
+							label: '🔐 Server Password',
+							description: 'Set the server password to display in embed',
+							value: 'server_password',
+							emoji: '🔐'
+						},
+                        {
+                            label: this.getText('setup.serverEdit.options.farmNames.label', {}, srv, gcfg) || 'Farm-Namen',
+                            description: this.getText('setup.serverEdit.options.farmNames.description', {}, srv, gcfg) || 'Farms umbenennen',
+                            value: 'farm_names',
+                            emoji: '🏠'
+                        },
+                        {
+                            label: this.getText('setup.common.back', {}, srv, gcfg) || '← Zurück',
+                            value: 'back',
+                            emoji: '↩'
+                        }
+                    ])
+            );
+    }
+
+    /**
+     * Farm Names Menu
+     */
+    createFarmNamesMenu(serverIdx, srv, gcfg = null) {
+        const farmNames = srv.farmNames || {};
+        
+        const embed = new EmbedBuilder()
+            .setColor('#8B4513')
+            .setTitle(this.getText('setup.farmNames.title', { serverName: srv.serverName }, srv, gcfg) || `🏠 ${srv.serverName} - Farm-Namen`)
+            .setDescription(this.getText('setup.farmNames.description', {}, srv, gcfg) || 'Wähle eine Farm zum Umbenennen:');
+
+        // Show current farm names
+        if (Object.keys(farmNames).length > 0) {
+            const farmList = Object.entries(farmNames)
+                .sort(([a], [b]) => parseInt(a) - parseInt(b))
+                .map(([id, name]) => `🏠 **Farm ${id}:** ${name}`)
+                .join('\n');
+
+            embed.addFields({
+                name: this.getText('setup.farmNames.currentNames', {}, srv, gcfg) || '📋 Aktuelle Namen',
+                value: farmList,
+                inline: false
+            });
+        } else {
+            embed.addFields({
+                name: this.getText('setup.farmNames.noNames', {}, srv, gcfg) || 'ℹ Keine Farm-Namen',
+                value: this.getText('setup.farmNames.noNamesText', {}, srv, gcfg) || 'Verwende `/vehicles` um Farms automatisch zu erkennen.',
+                inline: false
+            });
+        }
+
+        return embed;
+    }
+
+    /**
+     * Farm Names Select Menu
+     */
+    createFarmNamesSelect(serverIdx, srv, gcfg = null) {
+        const farmNames = srv.farmNames || {};
+
+        if (Object.keys(farmNames).length === 0) {
+            return new ActionRowBuilder()
+                .addComponents(
+                    new StringSelectMenuBuilder()
+                        .setCustomId(`setup_farm_names_back_${serverIdx}`)
+                        .setPlaceholder(this.getText('setup.common.back', {}, srv, gcfg) || '← Zurück')
+                        .addOptions([{
+                            label: this.getText('setup.common.back', {}, srv, gcfg) || '← Zurück',
+                            value: 'back',
+                            emoji: '↩'
+                        }])
+                );
+        }
+
+        const options = Object.entries(farmNames)
+            .sort(([a], [b]) => parseInt(a) - parseInt(b))
+            .map(([id, name]) => ({
+                label: `Farm ${id}: ${name}`,
+                description: this.getText('setup.farmNames.renameDescription', {}, srv, gcfg) || 'Klicken zum Umbenennen',
+                value: id,
+                emoji: '🏠'
+            }));
+
+        options.push({
+            label: this.getText('setup.common.back', {}, srv, gcfg) || '← Zurück',
+            value: 'back',
+            emoji: '↩'
+        });
+
+        return new ActionRowBuilder()
+            .addComponents(
+                new StringSelectMenuBuilder()
+                    .setCustomId(`setup_farm_rename_${serverIdx}`)
+                    .setPlaceholder(this.getText('setup.farmNames.selectPlaceholder', {}, srv, gcfg) || '🏠 Farm zum Umbenennen wählen...')
+                    .addOptions(options)
+            );
+    }
+	
+	// ═══════════════════════════════════════════════════════════
+    // FIELD ROTATION MENU
+    // ═══════════════════════════════════════════════════════════
+
+    /**
+     * Field Rotation Menu - Toggle und Info
+     */
+    createFieldRotationMenu(srv, gcfg = null) {
+        const s = srv.embedSettings || {};
+        const rotationEnabled = s.enableFieldRotation === true;
+        
+        const statusEmoji = rotationEnabled ? '✅' : '❌';
+        const statusText = rotationEnabled ? 'ENABLED' : 'DISABLED';
+        
+        const embed = new EmbedBuilder()
+            .setColor(rotationEnabled ? '#00FF00' : '#FF0000')
+            .setTitle('🔄 Field Rotation Settings')
+            .setDescription(
+                `**Current Status:** ${statusEmoji} ${statusText}\n\n` +
+                `Field Rotation allows you to display more than 25 fields in your status embed by rotating through them.\n\n` +
+                `**How it works:**\n` +
+                `• When **ENABLED**: Shows 25 fields at a time, rotating through all fields\n` +
+                `• When **DISABLED**: Shows only first 25 fields (Discord limit)\n\n` +
+                `**⚠️ Important:**\n` +
+                `• Discord embeds are limited to **25 fields maximum**\n` +
+                `• If you have >25 fields with rotation OFF, a warning will be shown\n` +
+                `• Enable rotation to cycle through all your fields automatically`
+            )
+            .addFields({
+                name: '📊 Statistics',
+                value: rotationEnabled 
+                    ? `Rotation is active - all fields will be shown in cycles of 25`
+                    : `Rotation is disabled - only first 25 fields are shown`,
+                inline: false
+            });
+        
+        return embed;
+    }
+
+    /**
+     * Field Rotation Toggle Select Menu
+     */
+    createFieldRotationSelect(serverIdx, srv, gcfg = null) {
+        const s = srv.embedSettings || {};
+        const rotationEnabled = s.enableFieldRotation === true;
+        
+        return new ActionRowBuilder()
+            .addComponents(
+                new StringSelectMenuBuilder()
+                    .setCustomId(`setup_field_rotation_toggle_${serverIdx}`)
+                    .setPlaceholder('🔄 Toggle Field Rotation...')
+                    .addOptions([
+                        {
+                            label: rotationEnabled ? '❌ Disable Field Rotation' : '✅ Enable Field Rotation',
+                            description: rotationEnabled 
+                                ? 'Turn off automatic field rotation (limit to 25 fields)'
+                                : 'Turn on automatic field rotation (cycle through all fields)',
+                            value: 'toggle',
+                            emoji: rotationEnabled ? '❌' : '✅'
+                        },
+                        {
+                            label: '↩ Back to Design Options',
+                            value: 'back',
+                            emoji: '↩'
+                        }
+                    ])
             );
     }
 }

@@ -23,7 +23,7 @@
           "label": "Update-Intervalle",
           "labelWithEmoji": "⏱️ Update-Intervalle",
           "description": "Aktualisierungszeiten anpassen",
-          "emoji": "⏱️"
+          "emoji": "⏱"
         },
         "embed": {
           "label": "Embed Design",
@@ -47,7 +47,7 @@
           "label": "Globale Einstellungen",
           "labelWithEmoji": "⚙️ Globale Einstellungen",
           "description": "Allgemeine Bot-Einstellungen",
-          "emoji": "⚙️"
+          "emoji": "⚙"
         },
         "texts": {
           "label": "Texte & Sprache",
@@ -56,6 +56,320 @@
           "emoji": "🌐"
         }
       }
+    },
+    "embedDesign": {
+      "title": "🎨 Embed Design",
+      "description": "Passe das Aussehen der Status-Embeds an:",
+      "noServers": "❌ Keine Server konfiguriert!",
+      "options": "🖌️ Optionen",
+      "optionsText": "• Farben ändern\n• Felder ein-/ausblenden",
+      "selectPlaceholder": "🎨 Server wählen...",
+      "serverDescription": "Design anpassen",
+      "designOptions": {
+        "title": "🎨 {serverName} - Design",
+        "description": "Was möchtest du ändern?",
+        "placeholder": "🎨 Was möchtest du ändern?",
+        "colors": {
+          "label": "Farben ändern",
+          "labelWithEmoji": "🎨 Farben ändern",
+          "description": "Online/Offline Farben",
+          "emoji": "🌈"
+        },
+        "fields": {
+          "label": "Felder anzeigen/verstecken",
+          "labelWithEmoji": "👁️ Felder anzeigen/verstecken",
+          "description": "Map, Spieler, Mods, etc.",
+          "emoji": "📊"
+        }
+      },
+      "fields": {
+        "title": "🎨 {serverName} - Felder",
+        "description": "Welche Felder möchtest du ein-/ausblenden?",
+        "selectDescription": "Wähle ein Feld oder schalte alle auf einmal um:",
+        "placeholder": "👁️ Feld ein-/ausblenden...",
+        "stats": "📊 Statistik",
+        "statsValue": "✅ Sichtbar: {visible}\n❌ Versteckt: {hidden}\n📋 Gesamt: {total}",
+        "separator": "─────────────",
+        "separatorSelected": {
+          "title": "ℹ️ Nur ein Trenner",
+          "description": "Das ist nur ein optischer Trenner.\n\nBitte wähle ein Feld oder eine der Aktionen darüber."
+        },
+        "allOn": {
+          "label": "Alle anzeigen",
+          "description": "Alle Felder einblenden",
+          "emoji": "✅",
+          "success": {
+            "title": "✅ Alle Felder aktiviert",
+            "description": "**{serverName}**\n\n**{count} Felder** werden jetzt angezeigt!"
+          }
+        },
+        "allOff": {
+          "label": "Alle verstecken",
+          "description": "Alle Felder ausblenden",
+          "emoji": "❌",
+          "success": {
+            "title": "❌ Alle Felder deaktiviert",
+            "description": "**{serverName}**\n\n**{count} Felder** wurden ausgeblendet!"
+          }
+        },
+        "map": {
+          "label": "Karte",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "🗺"
+        },
+        "version": {
+          "label": "Spielversion",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "🔢"
+        },
+        "password": {
+          "label": "Passwort-Anzeige",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "🔒"
+        },
+        "players": {
+          "label": "Spieleranzahl",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "👥"
+        },
+        "playerList": {
+          "label": "Spielerliste",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "👤"
+        },
+        "mods": {
+          "label": "Mod-Anzahl",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "🔧"
+        },
+        "vehicles": {
+          "label": "Fahrzeuganzahl",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "🚜"
+        },
+        "money": {
+          "label": "Geld",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "💰"
+        },
+        "difficulty": {
+          "label": "Schwierigkeit",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "⚔"
+        },
+        "timeScale": {
+          "label": "Zeitskala",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "⏱"
+        },
+        "greatDemands": {
+          "label": "Hohe Nachfrage",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "🌟"
+        },
+        "playTime": {
+          "label": "Spielzeit",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "⏲"
+        },
+        "currentDate": {
+          "label": "Aktuelles Datum",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "📅"
+        },
+        "saveDate": {
+          "label": "Speicherdatum",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "💾"
+        },
+        "growthRate": {
+          "label": "Wachstumsrate",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "🌱"
+        },
+        "fieldJobs": {
+          "label": "Feldaufträge",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "🚜"
+        },
+        "autoSave": {
+          "label": "Auto-Speichern",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "💾"
+        },
+        "resetVehicles": {
+          "label": "Fahrzeuge zurücksetzen",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "🔄"
+        },
+        "savegameName": {
+          "label": "Spielstand-Name",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "📝"
+        },
+        "creationDate": {
+          "label": "Erstellungsdatum",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "📆"
+        },
+        "traffic": {
+          "label": "Verkehr",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "🚗"
+        },
+        "weeds": {
+          "label": "Unkraut",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "🌿"
+        },
+        "fruitDestruction": {
+          "label": "Frucht-Zerstörung",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "🍎"
+        },
+        "snow": {
+          "label": "Schnee",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "❄"
+        },
+        "stones": {
+          "label": "Steine",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "🪨"
+        },
+        "fuelUsage": {
+          "label": "Kraftstoffverbrauch",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "⛽"
+        },
+        "loan": {
+          "label": "Aktueller Kredit",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "💳"
+        },
+        "initialMoney": {
+          "label": "Startgeld",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "💵"
+        },
+        "helperFuel": {
+          "label": "Helfer kauft Sprit",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "🛢️"
+        },
+        "helperSeeds": {
+          "label": "Helfer kauft Saatgut",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "🌾"
+        },
+        "helperFertilizer": {
+          "label": "Helfer kauft Dünger",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "💊"
+        },
+        "mapScreenshot": {
+          "label": "Karten-Vorschaubild",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "🖼️"
+        },
+        "passwordField": {
+          "label": "Passwort-Status",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt",
+          "emoji": "🔒"
+        },
+        "toggled": {
+          "title": "✅ Feld umgeschaltet",
+          "shown": "**{fieldName}** wird jetzt **angezeigt**",
+          "hidden": "**{fieldName}** wird jetzt **ausgeblendet**"
+        },
+        "success": {
+          "title": "✅ Feld-Einstellungen aktualisiert",
+          "description": "**{serverName}**\nÄnderungen wurden gespeichert!"
+        },
+        "modList": {
+          "emoji": "📋",
+          "label": "Mod-Liste",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt"
+        },
+        "initialLoan": {
+          "emoji": "💳",
+          "label": "Start-Kredit",
+          "visible": "✅ Sichtbar",
+          "hidden": "❌ Versteckt"
+        }
+      },
+      "colors": {
+        "modalTitle": "🎨 {serverName} - Farben",
+        "fields": {
+          "online": {
+            "label": "Online Farbe (Hex)",
+            "placeholder": "#00FF00"
+          },
+          "offline": {
+            "label": "Offline Farbe (Hex)",
+            "placeholder": "#FF0000"
+          }
+        },
+        "success": {
+          "title": "✅ Farben aktualisiert",
+          "online": "🟢 Online",
+          "offline": "🔴 Offline"
+        }
+      },
+      "navigation": {
+        "nextPage": {
+          "emoji": "▶"
+        },
+        "prevPage": {
+          "emoji": "◀"
+        }
+      }
+    },
+    "common": {
+      "back": "← Zurück",
+      "backToMain": "↩ Zurück zum Hauptmenü",
+      "cancel": "Abbrechen",
+      "save": "Speichern",
+      "enabled": "Aktiviert",
+      "disabled": "Deaktiviert",
+      "active": "✅ Aktiv",
+      "inactive": "❌ Inaktiv",
+      "backEmoji": "↩",
+      "backToMainEmoji": "↩"
     },
     "serverManagement": {
       "title": "📊 Server Verwaltung",
@@ -72,13 +386,13 @@
           "label": "Server bearbeiten",
           "labelWithEmoji": "✏️ Server bearbeiten",
           "description": "Bestehenden Server bearbeiten",
-          "emoji": "✏️"
+          "emoji": "✏"
         },
         "delete": {
           "label": "Server löschen",
           "labelWithEmoji": "🗑️ Server löschen",
           "description": "Server aus dem Monitoring entfernen",
-          "emoji": "🗑️"
+          "emoji": "🗑"
         },
         "toggle": {
           "label": "Monitoring an/aus",
@@ -90,7 +404,7 @@
           "label": "← Zurück zum Hauptmenü",
           "labelWithEmoji": "← Zurück zum Hauptmenü",
           "description": "Zurück zur Kategorieauswahl",
-          "emoji": "↩️"
+          "emoji": "↩"
         }
       },
       "toggle": {
@@ -127,7 +441,7 @@
         "allOff": {
           "label": "Alle deaktivieren",
           "description": "Alle Server-Überwachung pausieren",
-          "emoji": "⏸️",
+          "emoji": "⏸",
           "success": {
             "title": "⏸️ Alle Server deaktiviert",
             "description": "**{count} Server** wurden pausiert!\n\n⏸️ Monitoring ist für alle Server gestoppt."
@@ -152,6 +466,10 @@
           "modListUrl": {
             "label": "Mod List URL (optional)",
             "placeholder": "http://server:8080/mods.html"
+          },
+          "password": {
+            "label": "Server Passwort (optional)",
+            "placeholder": "GeheimesPasswort123"
           }
         },
         "channelSelect": {
@@ -220,112 +538,23 @@
         "30s": {
           "label": "30 Sekunden",
           "description": "Moderat",
-          "emoji": "📊"
+          "emoji": "⏱"
         },
         "1m": {
           "label": "1 Minute",
           "description": "Gering",
-          "emoji": "⏰"
+          "emoji": "🕐"
         },
         "5m": {
           "label": "5 Minuten",
           "description": "Sehr gering",
-          "emoji": "⏲️"
+          "emoji": "🕔"
         }
       },
       "success": {
         "title": "✅ Intervall aktualisiert",
         "description": "**{serverName}**\nNeues Intervall: **{interval}s**",
         "footer": "Monitoring wurde neu gestartet!"
-      }
-    },
-    "embedDesign": {
-      "title": "🎨 Embed Design",
-      "description": "Passe das Aussehen der Status-Embeds an:",
-      "noServers": "❌ Keine Server konfiguriert!",
-      "options": "🖌️ Optionen",
-      "optionsText": "• Farben ändern\n• Felder ein-/ausblenden",
-      "selectPlaceholder": "🎨 Server wählen...",
-      "serverDescription": "Design anpassen",
-      "designOptions": {
-        "title": "🎨 {serverName} - Design",
-        "description": "Was möchtest du ändern?",
-        "placeholder": "🎨 Was möchtest du ändern?",
-        "colors": {
-          "label": "Farben ändern",
-          "labelWithEmoji": "🎨 Farben ändern",
-          "description": "Online/Offline Farben",
-          "emoji": "🎨"
-        },
-        "fields": {
-          "label": "Felder anzeigen/verstecken",
-          "labelWithEmoji": "👁️ Felder anzeigen/verstecken",
-          "description": "Map, Spieler, Mods, etc.",
-          "emoji": "👁️"
-        }
-      },
-      "fields": {
-        "title": "🎨 {serverName} - Felder",
-        "description": "Welches Feld möchtest du ein-/ausblenden?",
-        "placeholder": "👁️ Feld ein-/ausblenden...",
-        "map": {
-          "label": "Map-Anzeige",
-          "visible": "✅ Sichtbar",
-          "hidden": "❌ Versteckt",
-          "emoji": "🗺️"
-        },
-        "password": {
-          "label": "Passwort-Anzeige",
-          "visible": "✅ Sichtbar",
-          "hidden": "❌ Versteckt",
-          "emoji": "🔒"
-        },
-        "players": {
-          "label": "Spielerliste",
-          "visible": "✅ Sichtbar",
-          "hidden": "❌ Versteckt",
-          "emoji": "👥"
-        },
-        "mods": {
-          "label": "Mod-Anzahl",
-          "visible": "✅ Sichtbar",
-          "hidden": "❌ Versteckt",
-          "emoji": "🔧"
-        },
-        "money": {
-          "label": "Kontostand",
-          "visible": "✅ Sichtbar",
-          "hidden": "❌ Versteckt",
-          "emoji": "💰"
-        },
-        "difficulty": {
-          "label": "Schwierigkeit",
-          "visible": "✅ Sichtbar",
-          "hidden": "❌ Versteckt",
-          "emoji": "⚡"
-        },
-        "success": {
-          "title": "✅ Feld-Einstellungen aktualisiert",
-          "description": "**{serverName}**\nÄnderungen wurden gespeichert!"
-        }
-      },
-      "colors": {
-        "modalTitle": "🎨 {serverName} - Farben",
-        "fields": {
-          "online": {
-            "label": "Online Farbe (Hex)",
-            "placeholder": "#00FF00"
-          },
-          "offline": {
-            "label": "Offline Farbe (Hex)",
-            "placeholder": "#FF0000"
-          }
-        },
-        "success": {
-          "title": "✅ Farben aktualisiert",
-          "online": "🟢 Online",
-          "offline": "🔴 Offline"
-        }
       }
     },
     "buttons": {
@@ -343,8 +572,8 @@
           "disable": "Buttons deaktivieren",
           "descriptionEnable": "Buttons wieder anzeigen",
           "descriptionDisable": "Alle Buttons ausblenden",
-          "emojiEnable": "🟢",
-          "emojiDisable": "🔴"
+          "emojiEnable": "✅",
+          "emojiDisable": "❌"
         },
         "players": {
           "label": "Spieler-Button",
@@ -370,7 +599,7 @@
           "label": "Rollen verwalten",
           "labelWithEmoji": "🎭 Rollen verwalten",
           "description": "Berechtigte Rollen hinzufügen/entfernen",
-          "emoji": "🎭"
+          "emoji": "👥"
         }
       },
       "roleManagement": {
@@ -508,15 +737,41 @@
         }
       }
     },
-    "common": {
-      "back": "← Zurück",
-      "backToMain": "← Zurück zum Hauptmenü",
-      "cancel": "Abbrechen",
-      "save": "Speichern",
-      "enabled": "Aktiviert",
-      "disabled": "Deaktiviert",
-      "active": "✅ Aktiv",
-      "inactive": "❌ Inaktiv"
+    "serverEdit": {
+      "description": "Wähle aus, was du bearbeiten möchtest:",
+      "placeholder": "✏️ Bearbeitungsoption wählen...",
+      "options": {
+        "basisInfo": {
+          "label": "Basis-Informationen",
+          "description": "Server-Name und URLs bearbeiten"
+        },
+        "weitereLinks": {
+          "label": "Weitere Links",
+          "description": "Mod-Liste und Career-URLs verwalten"
+        },
+        "farmNames": {
+          "label": "Farm-Namen",
+          "description": "Anzeigenamen der Farmen anpassen"
+        }
+      }
+    },
+    "farmNames": {
+      "modal": {
+        "title": "🏡 Farm umbenennen",
+        "label": "Farm Anzeigename",
+        "placeholder": "z.B. Grünes Tal Farm"
+      },
+      "success": {
+        "title": "✅ Farm umbenannt",
+        "description": "Farm **{oldName}** wird jetzt als **{newName}** angezeigt"
+      },
+      "title": "🏡 Farm-Namen verwalten",
+      "description": "Passe an, wie Farm-Namen im Status-Embed angezeigt werden:",
+      "currentNames": "📋 Aktuelle Farm-Namen",
+      "noNames": "ℹ️ Keine benutzerdefinierten Namen gesetzt",
+      "noNamesText": "Alle Farmen werden mit ihren Originalnamen angezeigt.",
+      "renameDescription": "Wähle eine Farm aus, um sie umzubenennen:",
+      "selectPlaceholder": "🏡 Farm zum Umbenennen wählen..."
     }
   },
   "status": {
@@ -534,11 +789,55 @@
         "difficulty": "{emoji} Schwierigkeit",
         "timeScale": "{emoji} Zeitskala",
         "playerList": "{emoji} Online Spieler",
-        "greatDemands": "{emoji} Aktive Nachfrage"
+        "greatDemands": "{emoji} Aktive Nachfrage",
+        "playTime": "{emoji} Spielzeit",
+        "currentDate": "{emoji} Aktuelles Datum",
+        "saveDate": "{emoji} Zuletzt gespeichert",
+        "growthRate": "{emoji} Wachstumsrate",
+        "fieldJobs": "{emoji} Feldaufträge",
+        "autoSave": "{emoji} Auto-Speichern",
+        "resetVehicles": "{emoji} Fahrzeuge zurücksetzen",
+        "savegameName": "{emoji} Spielstand",
+        "creationDate": "{emoji} Erstellt am",
+        "traffic": "{emoji} Verkehr",
+        "weeds": "{emoji} Unkraut",
+        "fruitDestruction": "{emoji} Fruchtzerstörung",
+        "snow": "{emoji} Schnee",
+        "stones": "{emoji} Steine",
+        "fuelUsage": "{emoji} Spritverbrauch",
+        "loan": "{emoji} Kredit",
+        "initialMoney": "{emoji} Startkapital",
+        "helperFuel": "{emoji} Helfer kauft Sprit",
+        "helperSeeds": "{emoji} Helfer kauft Saatgut",
+        "helperFertilizer": "{emoji} Helfer kauft Dünger",
+        "modList": "{emoji} Mod-Liste",
+        "initialLoan": "{emoji} Anfangskredit"
       },
       "noPlayers": "➖ Niemand online",
       "passwordYes": "🔒 Ja",
-      "passwordNo": "🔓 Nein"
+      "passwordNo": "🔓 Nein",
+      "fieldJobsOn": "✅ Aktiviert",
+      "fieldJobsOff": "❌ Deaktiviert",
+      "autoSaveOn": "✅ Ein",
+      "autoSaveOff": "❌ Aus",
+      "resetVehiclesOn": "✅ Ein",
+      "resetVehiclesOff": "❌ Aus",
+      "trafficOn": "✅ Ein",
+      "trafficOff": "❌ Aus",
+      "weedsOn": "✅ Ein",
+      "weedsOff": "❌ Aus",
+      "fruitDestructionOn": "✅ Ein",
+      "fruitDestructionOff": "❌ Aus",
+      "snowOn": "✅ Ein",
+      "snowOff": "❌ Aus",
+      "stonesOn": "✅ Ein",
+      "stonesOff": "❌ Aus",
+      "helperFuelOn": "✅ Ja",
+      "helperFuelOff": "❌ Nein",
+      "helperSeedsOn": "✅ Ja",
+      "helperSeedsOff": "❌ Nein",
+      "helperFertilizerOn": "✅ Ja",
+      "helperFertilizerOff": "❌ Nein"
     },
     "offline": {
       "title": "{emoji} {serverName} Offline",
@@ -623,6 +922,10 @@
       "description": "Der Bot hat nicht alle benötigten Berechtigungen in <#{channelId}>!",
       "permissionsList": "📋 Benötigte Berechtigungen",
       "footer": "Bitte gib dem Bot die fehlenden Berechtigungen und versuche es erneut."
+    },
+    "invalidHexColor": {
+      "title": "❌ Ungültiges Farbformat",
+      "description": "Bitte verwende ein gültiges Hex-Farbformat!\n\n**Beispiel:** #00FF00 oder #0F0\n**Deine Eingabe:** {input}"
     }
   },
   "permissions": {

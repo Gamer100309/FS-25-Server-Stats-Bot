@@ -14,6 +14,7 @@ const {
     ChannelType 
 } = require('discord.js');
 const { SetupMenus } = require('./SetupMenus');
+const { VehicleMenus } = require('./VehicleMenus');
 const { StatusChecker } = require('./StatusChecker');
 
 class InteractionHandler {
@@ -24,15 +25,68 @@ class InteractionHandler {
         this.monitoringManager = monitoringManager;
         this.messageHandler = messageHandler;
 		this.vehicleMenus = new VehicleMenus(messageHandler);
-        
-        // SetupMenus mit MessageHandler initialisieren
-        this.setupMenus = new SetupMenus(messageHandler);
-        
-        if (!client.tempServerData) {
+		this.setupMenus = new SetupMenus(messageHandler);
+		
+		if (!client.tempServerData) {
             client.tempServerData = new Map();
-        },
-		if (!client.vehicleData) {
-    client.vehicleData = new Map();
+        }
+        
+        // Vehicle Data Map für Session Management
+        if (!client.vehicleData) {
+            client.vehicleData = new Map();
+        }
+    }
+
+    /**
+     * Validate hex color code
+     * @param {string} color - Color to validate (e.g. "#00FF00")
+     * @returns {object} { valid: boolean, color: string, error: string }
+     */
+    validateHexColor(color) {
+        // Remove whitespace
+        const trimmed = (color || '').trim();
+        
+        // Check if empty
+        if (!trimmed) {
+            return { 
+                valid: false, 
+                color: null, 
+                error: 'Color code cannot be empty' 
+            };
+        }
+        
+        // Check format: Must start with # and have 6 hex characters
+        const hexRegex = /^#[0-9A-Fa-f]{6}$/;
+        
+        if (!hexRegex.test(trimmed)) {
+            // Detailed error message
+            let error = 'Invalid hex color code!';
+            
+            if (!trimmed.startsWith('#')) {
+                error += '\n• Must start with #';
+            }
+            if (trimmed.length !== 7) {
+                error += `\n• Must be 7 characters (is ${trimmed.length})`;
+            }
+            if (!/^[#0-9A-Fa-f]*$/.test(trimmed)) {
+                error += '\n• Only 0-9 and A-F allowed';
+            }
+            
+            error += '\n\nExample: #00FF00';
+            
+            return { 
+                valid: false, 
+                color: null, 
+                error 
+            };
+        }
+        
+        // Valid!
+        return { 
+            valid: true, 
+            color: trimmed.toUpperCase(), 
+            error: null 
+        };
     }
 
     async handle(interaction) {
@@ -60,106 +114,250 @@ class InteractionHandler {
 
     // ═══════════════════════════════════════════════════════════
 	//  EMBED FIELDS HANDLER - FS FELDER (Map, Password, Players, Mods)
-	//  SUCHE in InteractionHandler.js nach: async handleEmbedFields
-	//  ERSETZE die komplette Methode
 	// ═══════════════════════════════════════════════════════════
 
-	async handleEmbedFields(interaction, idx, gcfg) {
+	async handleEmbedFields(interaction, idx, gcfg, page = 1) {
 		const srv = gcfg.servers[idx];
 		if (!srv.embedSettings) srv.embedSettings = {};
 		const s = srv.embedSettings;
 
 		// ═══════════════════════════════════════════════════════════
-		// FS FELDER: Map, Password, Players, Mods, Money, Difficulty
+		// ALLE FELDER DEFINIEREN
 		// ═══════════════════════════════════════════════════════════
-
-		const mapStatus = s.showMap !== false 
-			? (this.messageHandler ? this.messageHandler.get('setup.embedDesign.fields.map.visible', {}, srv, gcfg) : '✅ Visible')
-			: (this.messageHandler ? this.messageHandler.get('setup.embedDesign.fields.map.hidden', {}, srv, gcfg) : '❌ Hidden');
 		
-		const passwordStatus = s.showPassword !== false
-			? (this.messageHandler ? this.messageHandler.get('setup.embedDesign.fields.password.visible', {}, srv, gcfg) : '✅ Visible')
-			: (this.messageHandler ? this.messageHandler.get('setup.embedDesign.fields.password.hidden', {}, srv, gcfg) : '❌ Hidden');
-		
-		const playersStatus = s.showPlayerList !== false
-			? (this.messageHandler ? this.messageHandler.get('setup.embedDesign.fields.players.visible', {}, srv, gcfg) : '✅ Visible')
-			: (this.messageHandler ? this.messageHandler.get('setup.embedDesign.fields.players.hidden', {}, srv, gcfg) : '❌ Hidden');
-		
-		const modsStatus = s.showMods !== false
-			? (this.messageHandler ? this.messageHandler.get('setup.embedDesign.fields.mods.visible', {}, srv, gcfg) : '✅ Visible')
-			: (this.messageHandler ? this.messageHandler.get('setup.embedDesign.fields.mods.hidden', {}, srv, gcfg) : '❌ Hidden');
+		const allFields = [
+			// BASIC FIELDS (16)
+			{ key: 'showMap', name: 'map' },
+			{ key: 'showVersion', name: 'version' },
+			{ key: 'showPasswordField', name: 'passwordField' },
+			{ key: 'showPlayers', name: 'players' },
+			{ key: 'showPlayerList', name: 'playerList' },
+			{ key: 'showMods', name: 'mods' },
+			{ key: 'showModList', name: 'modList' },
+			{ key: 'showVehicles', name: 'vehicles' },
+			{ key: 'showMoney', name: 'money' },
+			{ key: 'showDifficulty', name: 'difficulty' },
+			{ key: 'showTimeScale', name: 'timeScale' },
+			{ key: 'showGreatDemands', name: 'greatDemands' },
+			{ key: 'showPlayTime', name: 'playTime' },
+			{ key: 'showCurrentDate', name: 'currentDate' },
+			{ key: 'showSaveDate', name: 'saveDate' },
+			{ key: 'showCreationDate', name: 'creationDate' },
+			{ key: 'showGrowthRate', name: 'growthRate' },
+			{ key: 'showInitialLoan', name: 'initialLoan' },
+			
+			// ADVANCED FIELDS (16)
+			{ key: 'showFieldJobs', name: 'fieldJobs' },
+			{ key: 'showAutoSave', name: 'autoSave' },
+			{ key: 'showResetVehicles', name: 'resetVehicles' },
+			{ key: 'showTraffic', name: 'traffic' },
+			{ key: 'showWeeds', name: 'weeds' },
+			{ key: 'showFruitDestruction', name: 'fruitDestruction' },
+			{ key: 'showSnow', name: 'snow' },
+			{ key: 'showStones', name: 'stones' },
+			{ key: 'showFuelUsage', name: 'fuelUsage' },
+			{ key: 'showLoan', name: 'loan' },
+			{ key: 'showInitialMoney', name: 'initialMoney' },
+			{ key: 'showHelperFuel', name: 'helperFuel' },
+			{ key: 'showHelperSeeds', name: 'helperSeeds' },
+			{ key: 'showHelperFertilizer', name: 'helperFertilizer' },
+			{ key: 'showSavegameName', name: 'savegameName' },
+			{ key: 'showMapScreenshot', name: 'mapScreenshot' }
+		];
 
-		const moneyStatus = s.showMoney === true
-			? (this.messageHandler ? this.messageHandler.get('setup.embedDesign.fields.money.visible', {}, srv, gcfg) : '✅ Visible')
-			: (this.messageHandler ? this.messageHandler.get('setup.embedDesign.fields.money.hidden', {}, srv, gcfg) : '❌ Hidden');
+		// ═══════════════════════════════════════════════════════════
+		// PAGINATION
+		// ═══════════════════════════════════════════════════════════
+		
+		const fieldsPerPage = 12;
+		const startIdx = (page - 1) * fieldsPerPage;
+		const endIdx = startIdx + fieldsPerPage;
+		const fields = allFields.slice(startIdx, endIdx);
+		const totalPages = Math.ceil(allFields.length / fieldsPerPage);
 
-		const difficultyStatus = s.showDifficulty === true
-			? (this.messageHandler ? this.messageHandler.get('setup.embedDesign.fields.difficulty.visible', {}, srv, gcfg) : '✅ Visible')
-			: (this.messageHandler ? this.messageHandler.get('setup.embedDesign.fields.difficulty.hidden', {}, srv, gcfg) : '❌ Hidden');
+		// ═══════════════════════════════════════════════════════════
+		// STATISTIK FÜR ALLE FELDER (nicht nur aktuelle Seite)
+		// ═══════════════════════════════════════════════════════════
+		
+		let visibleCount = 0;
+		let hiddenCount = 0;
+
+		allFields.forEach(field => {
+			if (s[field.key] !== false) {
+				visibleCount++;
+			} else {
+				hiddenCount++;
+			}
+		});
+
+		const allVisible = visibleCount === allFields.length;
+		const allHidden = hiddenCount === allFields.length;
+
+		// ═══════════════════════════════════════════════════════════
+		// EMBED MIT STATISTIK
+		// ═══════════════════════════════════════════════════════════
+		
+		const title = this.messageHandler
+			? this.messageHandler.get('setup.embedDesign.fields.title', { serverName: srv.serverName }, srv, gcfg)
+			: `🎨 ${srv.serverName} - Fields (Page ${page}/${totalPages})`;
+		
+		const description = this.messageHandler
+			? this.messageHandler.get('setup.embedDesign.fields.selectDescription', {}, srv, gcfg)
+			: 'Choose a field or toggle all at once:';
+		
+		const statsLabel = this.messageHandler
+			? this.messageHandler.get('setup.embedDesign.fields.stats', {}, srv, gcfg)
+			: '📊 Statistics';
+		
+		const statsValue = this.messageHandler
+			? this.messageHandler.get('setup.embedDesign.fields.statsValue', {
+				visible: visibleCount,
+				hidden: hiddenCount,
+				total: allFields.length
+			  }, srv, gcfg)
+			: `✅ Visible: ${visibleCount}\n❌ Hidden: ${hiddenCount}\n📋 Total: ${allFields.length}\n📄 Page: ${page}/${totalPages}`;
+
+		const embed = new EmbedBuilder()
+			.setColor('#FF69B4')
+			.setTitle(title)
+			.setDescription(description)
+			.addFields({
+				name: statsLabel,
+				value: statsValue,
+				inline: false
+			});
+
+		// ═══════════════════════════════════════════════════════════
+		// DROPDOWN-MENÜ ERSTELLEN
+		// ═══════════════════════════════════════════════════════════
+		
+		const options = [];
+
+		// ALLE ANZEIGEN - nur wenn nicht alle schon sichtbar sind
+		if (!allVisible) {
+			options.push({
+				label: this.messageHandler
+					? this.messageHandler.get('setup.embedDesign.fields.allOn.label', {}, srv, gcfg)
+					: 'Show All Fields',
+				description: this.messageHandler
+					? this.messageHandler.get('setup.embedDesign.fields.allOn.description', {}, srv, gcfg)
+					: 'Make all fields visible',
+				value: 'all_on',
+				emoji: this.messageHandler
+					? (this.messageHandler.get('setup.embedDesign.fields.allOn.emoji', {}, srv, gcfg) || '😮')
+					: '😮'
+			});
+		}
+
+		// ALLE VERSTECKEN - nur wenn nicht alle schon versteckt sind
+		if (!allHidden) {
+			options.push({
+				label: this.messageHandler
+					? this.messageHandler.get('setup.embedDesign.fields.allOff.label', {}, srv, gcfg)
+					: 'Hide All Fields',
+				description: this.messageHandler
+					? this.messageHandler.get('setup.embedDesign.fields.allOff.description', {}, srv, gcfg)
+					: 'Hide all fields',
+				value: 'all_off',
+				emoji: this.messageHandler
+					? (this.messageHandler.get('setup.embedDesign.fields.allOff.emoji', {}, srv, gcfg) || '😮')
+					: '😮'
+			});
+		}
+
+		// Separator nur wenn "Alle"-Buttons da sind
+		if (options.length > 0) {
+			options.push({
+				label: '─────────────',
+				description: this.messageHandler
+					? this.messageHandler.get('setup.embedDesign.fields.separator', {}, srv, gcfg)
+					: `Page ${page}/${totalPages}`,
+				value: 'separator'
+			});
+		}
+
+		// ═══════════════════════════════════════════════════════════
+		// EINZELNE FELDER DER AKTUELLEN SEITE
+		// ═══════════════════════════════════════════════════════════
+		
+		fields.forEach(field => {
+			const isVisible = s[field.key] !== false;
+			
+			const statusText = isVisible
+				? (this.messageHandler
+					? this.messageHandler.get(`setup.embedDesign.fields.${field.name}.visible`, {}, srv, gcfg)
+					: '✅ Visible')
+				: (this.messageHandler
+					? this.messageHandler.get(`setup.embedDesign.fields.${field.name}.hidden`, {}, srv, gcfg)
+					: '❌ Hidden');
+			
+			const label = this.messageHandler
+				? this.messageHandler.get(`setup.embedDesign.fields.${field.name}.label`, {}, srv, gcfg)
+				: field.name;
+			
+			const emoji = this.messageHandler
+				? this.messageHandler.get(`setup.embedDesign.fields.${field.name}.emoji`, {}, srv, gcfg) || '📋'
+				: '📋';
+
+			options.push({
+				label: label,
+				description: statusText,
+				value: field.name,
+				emoji: emoji
+			});
+		});
+
+		// ═══════════════════════════════════════════════════════════
+		// NAVIGATION: NEXT PAGE
+		// ═══════════════════════════════════════════════════════════
+		
+		if (page < totalPages) {
+			options.push({
+				label: 'Next Page →',
+				description: `Go to page ${page + 1}/${totalPages}`,
+				value: `page_${page + 1}`,
+				emoji: this.messageHandler.get('setup.embedDesign.navigation.nextPage.emoji', {}, srv, gcfg) || '😮'
+			});
+		}
+
+		// ═══════════════════════════════════════════════════════════
+		// NAVIGATION: PREVIOUS PAGE
+		// ═══════════════════════════════════════════════════════════
+		
+		if (page > 1) {
+			options.push({
+				label: '← Previous Page',
+				description: `Back to page ${page - 1}/${totalPages}`,
+				value: `page_${page - 1}`,
+				emoji: this.messageHandler.get('setup.embedDesign.navigation.prevPage.emoji', {}, srv, gcfg) || '😮'
+			});
+		}
+
+		// ═══════════════════════════════════════════════════════════
+		// ZURÜCK
+		// ═══════════════════════════════════════════════════════════
+		
+		options.push({
+			label: this.messageHandler
+				? this.messageHandler.get('setup.common.back', {}, srv, gcfg)
+				: '← Back',
+			value: 'back',
+			emoji: this.messageHandler.get('setup.common.backEmoji', {}, srv, gcfg) || '😮',
+			description: 'Return to previous menu'
+		});
 
 		const fieldOptions = new ActionRowBuilder()
 			.addComponents(
 				new StringSelectMenuBuilder()
 					.setCustomId(`setup_embed_fields_${idx}`)
-					.setPlaceholder(this.messageHandler ? this.messageHandler.get('setup.embedDesign.fields.placeholder', {}, srv, gcfg) : '👁️ Toggle field...')
-					.addOptions([
-						{ 
-							label: this.messageHandler ? this.messageHandler.get('setup.embedDesign.fields.map.label', {}, srv, gcfg) : 'Map Display', 
-							description: mapStatus, 
-							value: 'map', 
-							emoji: this.messageHandler ? this.messageHandler.get('setup.embedDesign.fields.map.emoji', {}, srv, gcfg) : '🗺️'
-						},
-						{ 
-							label: this.messageHandler ? this.messageHandler.get('setup.embedDesign.fields.password.label', {}, srv, gcfg) : 'Password Display', 
-							description: passwordStatus, 
-							value: 'password', 
-							emoji: this.messageHandler ? this.messageHandler.get('setup.embedDesign.fields.password.emoji', {}, srv, gcfg) : '🔒'
-						},
-						{ 
-							label: this.messageHandler ? this.messageHandler.get('setup.embedDesign.fields.players.label', {}, srv, gcfg) : 'Player List', 
-							description: playersStatus, 
-							value: 'players', 
-							emoji: this.messageHandler ? this.messageHandler.get('setup.embedDesign.fields.players.emoji', {}, srv, gcfg) : '👥'
-						},
-						{ 
-							label: this.messageHandler ? this.messageHandler.get('setup.embedDesign.fields.mods.label', {}, srv, gcfg) : 'Mod Count', 
-							description: modsStatus, 
-							value: 'mods', 
-							emoji: this.messageHandler ? this.messageHandler.get('setup.embedDesign.fields.mods.emoji', {}, srv, gcfg) : '🔧'
-						},
-						{ 
-							label: this.messageHandler ? this.messageHandler.get('setup.embedDesign.fields.money.label', {}, srv, gcfg) : 'Account Balance', 
-							description: moneyStatus, 
-							value: 'money', 
-							emoji: this.messageHandler ? this.messageHandler.get('setup.embedDesign.fields.money.emoji', {}, srv, gcfg) : '💰'
-						},
-						{ 
-							label: this.messageHandler ? this.messageHandler.get('setup.embedDesign.fields.difficulty.label', {}, srv, gcfg) : 'Difficulty', 
-							description: difficultyStatus, 
-							value: 'difficulty', 
-							emoji: this.messageHandler ? this.messageHandler.get('setup.embedDesign.fields.difficulty.emoji', {}, srv, gcfg) : '⚡'
-						},
-						{ 
-							label: this.messageHandler ? this.messageHandler.get('setup.common.back', {}, srv, gcfg) : '← Back', 
-							value: 'back', 
-							emoji: '↩️' 
-						}
-					])
+					.setPlaceholder(this.messageHandler
+						? this.messageHandler.get('setup.embedDesign.fields.placeholder', {}, srv, gcfg)
+						: `👁️ Toggle field... (Page ${page}/${totalPages})`)
+					.addOptions(options)
 			);
 
-		const title = this.messageHandler 
-			? this.messageHandler.get('setup.embedDesign.fields.title', { serverName: srv.serverName }, srv, gcfg)
-			: `🎨 ${srv.serverName} - Fields`;
-		
-		const description = this.messageHandler
-			? this.messageHandler.get('setup.embedDesign.fields.description', {}, srv, gcfg)
-			: 'Which field would you like to show/hide?';
-
 		await interaction.update({
-			embeds: [new EmbedBuilder()
-				.setColor('#FF69B4')
-				.setTitle(title)
-				.setDescription(description)],
+			embeds: [embed],
 			components: [fieldOptions]
 		});
 	}
@@ -451,7 +649,40 @@ class InteractionHandler {
 			const idx = parseInt(interaction.customId.split('_')[3]);
 			const value = interaction.values[0];
 			const srv = gcfg.servers[idx];
+			if (!srv.embedSettings) srv.embedSettings = {};
+			const s = srv.embedSettings;
+			
+			// PAGE NAVIGATION
+		   if (value.startsWith('page_')) {
+			   const newPage = parseInt(value.split('_')[1]);
+			   await this.handleEmbedFields(interaction, idx, gcfg, newPage);
+			   return;
+		   }
 
+		   // SEPARATOR - ZEIGE NACHRICHT
+		   if (value === 'separator') {
+			   const title = this.messageHandler
+				   ? this.messageHandler.get('setup.embedDesign.fields.separatorSelected.title', {}, srv, gcfg)
+				   : 'ℹ️ Nur ein Trenner';
+			   
+			   const description = this.messageHandler
+				   ? this.messageHandler.get('setup.embedDesign.fields.separatorSelected.description', {}, srv, gcfg)
+				   : 'Das ist nur ein optischer Trenner.\n\nBitte wähle ein Feld oder eine der Aktionen darüber.';
+
+			   await interaction.deferUpdate();
+			   await interaction.followUp({
+					embeds: [new EmbedBuilder()
+						.setColor('#3498DB')
+						.setTitle(title)
+						.setDescription(description)],
+					ephemeral: true
+			   });
+			   return;
+		   }
+
+			// ═══════════════════════════════════════════════════════════
+			// ZURÜCK
+			// ═══════════════════════════════════════════════════════════
 			if (value === 'back') {
 				const title = this.messageHandler
 					? this.messageHandler.get('setup.embedDesign.designOptions.title', { serverName: srv.serverName }, srv, gcfg)
@@ -459,7 +690,7 @@ class InteractionHandler {
 				
 				const description = this.messageHandler
 					? this.messageHandler.get('setup.embedDesign.designOptions.description', {}, srv, gcfg)
-					: 'What would you like to change?';
+					: 'Was möchtest du ändern?';
 
 				await interaction.update({
 					embeds: [new EmbedBuilder()
@@ -471,47 +702,307 @@ class InteractionHandler {
 				return;
 			}
 
-			if (!srv.embedSettings) srv.embedSettings = {};
-			const s = srv.embedSettings;
-
 			// ═══════════════════════════════════════════════════════════
-			// FS FELDER TOGGLE - Map, Password, Players, Mods, Money, Difficulty
+			// SEPARATOR AUSGEWÄHLT - FREUNDLICHE NACHRICHT
 			// ═══════════════════════════════════════════════════════════
+			if (value === 'separator') {
+				const title = this.messageHandler
+					? this.messageHandler.get('setup.embedDesign.fields.separatorSelected.title', {}, srv, gcfg)
+					: 'ℹ️ Nur ein Trenner';
+				
+				const description = this.messageHandler
+					? this.messageHandler.get('setup.embedDesign.fields.separatorSelected.description', {}, srv, gcfg)
+					: 'Das ist nur ein optischer Trenner.\n\nBitte wähle ein Feld oder eine der Aktionen darüber.';
 
-			if (value === 'map') {
-				s.showMap = !(s.showMap !== false);
-			} else if (value === 'password') {
-				s.showPassword = !(s.showPassword !== false);
-			} else if (value === 'players') {
-				s.showPlayerList = !(s.showPlayerList !== false);
-			} else if (value === 'mods') {
-				s.showMods = !(s.showMods !== false);
-			} else if (value === 'money') {
-				s.showMoney = !s.showMoney;
-			} else if (value === 'difficulty') {
-				s.showDifficulty = !s.showDifficulty;
+				await interaction.deferUpdate();
+				await interaction.followUp({
+					embeds: [new EmbedBuilder()
+						.setColor('#3498DB')
+						.setTitle(title)
+						.setDescription(description)],
+					ephemeral: true
+				});
+				return;
 			}
 
-			this.configManager.saveGuild(interaction.guildId, gcfg);
-			this.monitoringManager.startMonitoring(interaction.guildId);
+			// ═══════════════════════════════════════════════════════════
+			// ALLE FELDER AKTIVIEREN
+			// ═══════════════════════════════════════════════════════════
+			if (value === 'all_on') {
+                const fields = [
+                    // BASIC FIELDS (11)
+                    'showMap', 'showVersion', 'showPasswordField', 'showPlayers', 
+                    'showPlayerList', 'showMods', 'showModList', 'showVehicles', 'showMoney', 
+                    'showDifficulty', 'showTimeScale', 'showGreatDemands',
+                    
+                    // TIME & DATE FIELDS (4)
+                    'showPlayTime', 'showCurrentDate', 'showSaveDate', 'showCreationDate',
+                    
+                    // GAMEPLAY SETTINGS (10)
+                    'showGrowthRate', 'showFieldJobs', 'showAutoSave', 'showResetVehicles',
+                    'showTraffic', 'showWeeds', 'showFruitDestruction', 'showSnow',
+                    'showStones', 'showFuelUsage',
+                    
+                    // FINANCIAL FIELDS (2)
+                    'showLoan', 'showInitialMoney', 'showInitialLoan',
+                    
+                    // HELPER SETTINGS (3)
+                    'showHelperFuel', 'showHelperSeeds', 'showHelperFertilizer',
+                    
+                    // SAVEGAME INFO (2)
+                    'showSavegameName', 'showMapScreenshot'
+                ];
 
-			const title = this.messageHandler
-				? this.messageHandler.get('setup.embedDesign.fields.success.title', {}, srv, gcfg)
-				: '✅ Field Settings Updated';
-			
-			const description = this.messageHandler
-				? this.messageHandler.get('setup.embedDesign.fields.success.description', { serverName: srv.serverName }, srv, gcfg)
-				: `**${srv.serverName}**\nChanges have been saved!`;
+                fields.forEach(field => {
+                    s[field] = true;
+                });
 
-			await interaction.update({
-				embeds: [new EmbedBuilder()
-					.setColor('#00FF00')
-					.setTitle(title)
-					.setDescription(description)],
-				components: []
-			});
-			return;
+				this.configManager.saveGuild(interaction.guildId, gcfg);
+				this.monitoringManager.startMonitoring(interaction.guildId);
+
+				const title = this.messageHandler
+					? this.messageHandler.get('setup.embedDesign.fields.allOn.success.title', {}, srv, gcfg)
+					: '✅ Alle Felder aktiviert';
+				
+				const description = this.messageHandler
+					? this.messageHandler.get('setup.embedDesign.fields.allOn.success.description', { 
+						serverName: srv.serverName,
+						count: fields.length
+					  }, srv, gcfg)
+					: `**${srv.serverName}**\n\n**${fields.length} Felder** werden jetzt angezeigt!`;
+
+				// UPDATE mit neuem Menü!
+				await this.handleEmbedFields(interaction, idx, gcfg);
+
+				// Zusätzliche Bestätigung als Ephemeral
+				await interaction.followUp({
+					embeds: [new EmbedBuilder()
+						.setColor('#00FF00')
+						.setTitle(title)
+						.setDescription(description)],
+					ephemeral: true
+				});
+
+				this.logger.success(`All embed fields enabled for "${srv.serverName}" by ${interaction.user.tag}`);
+				return;
+			}
+
+			// ═══════════════════════════════════════════════════════════
+			// ALLE FELDER DEAKTIVIEREN
+			// ═══════════════════════════════════════════════════════════
+			if (value === 'all_off') {
+                const fields = [
+                    // BASIC FIELDS (11)
+                    'showMap', 'showVersion', 'showPasswordField', 'showPlayers', 
+                    'showPlayerList', 'showMods', 'showModList', 'showVehicles', 'showMoney', 
+                    'showDifficulty', 'showTimeScale', 'showGreatDemands',
+                    
+                    // TIME & DATE FIELDS (4)
+                    'showPlayTime', 'showCurrentDate', 'showSaveDate', 'showCreationDate',
+                    
+                    // GAMEPLAY SETTINGS (10)
+                    'showGrowthRate', 'showFieldJobs', 'showAutoSave', 'showResetVehicles',
+                    'showTraffic', 'showWeeds', 'showFruitDestruction', 'showSnow',
+                    'showStones', 'showFuelUsage',
+                    
+                    // FINANCIAL FIELDS (2)
+                    'showLoan', 'showInitialMoney', 'showInitialLoan',
+                    
+                    // HELPER SETTINGS (3)
+                    'showHelperFuel', 'showHelperSeeds', 'showHelperFertilizer',
+                    
+                    // SAVEGAME INFO (2)
+                    'showSavegameName', 'showMapScreenshot'
+                ];
+
+                fields.forEach(field => {
+                    s[field] = false;
+                });
+
+				this.configManager.saveGuild(interaction.guildId, gcfg);
+				this.monitoringManager.startMonitoring(interaction.guildId);
+
+				const title = this.messageHandler
+					? this.messageHandler.get('setup.embedDesign.fields.allOff.success.title', {}, srv, gcfg)
+					: '❌ Alle Felder deaktiviert';
+				
+				const description = this.messageHandler
+					? this.messageHandler.get('setup.embedDesign.fields.allOff.success.description', { 
+						serverName: srv.serverName,
+						count: fields.length
+					  }, srv, gcfg)
+					: `**${srv.serverName}**\n\n**${fields.length} Felder** wurden ausgeblendet!`;
+
+				// UPDATE mit neuem Menü!
+				await this.handleEmbedFields(interaction, idx, gcfg);
+
+				// Zusätzliche Bestätigung als Ephemeral
+				await interaction.followUp({
+					embeds: [new EmbedBuilder()
+						.setColor('#FFA500')
+						.setTitle(title)
+						.setDescription(description)],
+					ephemeral: true
+				});
+
+				this.logger.success(`All embed fields disabled for "${srv.serverName}" by ${interaction.user.tag}`);
+				return;
+			}
+
+			// ═══════════════════════════════════════════════════════════
+			// EINZELNES FELD TOGGLE
+			// ═══════════════════════════════════════════════════════════
+			const fieldMap = {
+                // BASIC FIELDS (11)
+                'map': 'showMap',
+                'version': 'showVersion',
+                'passwordField': 'showPasswordField',
+                'players': 'showPlayers',
+                'playerList': 'showPlayerList',
+                'mods': 'showMods',
+                'modList': 'showModList',
+                'vehicles': 'showVehicles',
+                'money': 'showMoney',
+                'difficulty': 'showDifficulty',
+                'timeScale': 'showTimeScale',
+                'greatDemands': 'showGreatDemands',
+                
+                // TIME & DATE FIELDS (4)
+                'playTime': 'showPlayTime',
+                'currentDate': 'showCurrentDate',
+                'saveDate': 'showSaveDate',
+                'creationDate': 'showCreationDate',
+                
+                // GAMEPLAY SETTINGS (10)
+                'growthRate': 'showGrowthRate',
+                'fieldJobs': 'showFieldJobs',
+                'autoSave': 'showAutoSave',
+                'resetVehicles': 'showResetVehicles',
+                'traffic': 'showTraffic',
+                'weeds': 'showWeeds',
+                'fruitDestruction': 'showFruitDestruction',
+                'snow': 'showSnow',
+                'stones': 'showStones',
+                'fuelUsage': 'showFuelUsage',
+                
+                // FINANCIAL FIELDS (2)
+                'loan': 'showLoan',
+                'initialMoney': 'showInitialMoney',
+                'initialLoan': 'showInitialLoan',
+                
+                // HELPER SETTINGS (3)
+                'helperFuel': 'showHelperFuel',
+                'helperSeeds': 'showHelperSeeds',
+                'helperFertilizer': 'showHelperFertilizer',
+                
+                // SAVEGAME INFO (2)
+                'savegameName': 'showSavegameName',
+                'mapScreenshot': 'showMapScreenshot'
+            };
+
+
+			const settingKey = fieldMap[value];
+			if (settingKey) {
+				// Toggle field
+				const wasVisible = s[settingKey] !== false;
+				s[settingKey] = !wasVisible;
+				const nowVisible = !wasVisible;
+
+				this.configManager.saveGuild(interaction.guildId, gcfg);
+				this.monitoringManager.startMonitoring(interaction.guildId);
+
+				// Get field name for display
+				const fieldName = this.messageHandler
+					? this.messageHandler.get(`setup.embedDesign.fields.${value}.label`, {}, srv, gcfg)
+					: value;
+
+				const title = this.messageHandler
+					? this.messageHandler.get('setup.embedDesign.fields.toggled.title', {}, srv, gcfg)
+					: '✅ Feld umgeschaltet';
+				
+				const description = nowVisible
+					? (this.messageHandler
+						? this.messageHandler.get('setup.embedDesign.fields.toggled.shown', { fieldName }, srv, gcfg)
+						: `**${fieldName}** wird jetzt **angezeigt**`)
+					: (this.messageHandler
+						? this.messageHandler.get('setup.embedDesign.fields.toggled.hidden', { fieldName }, srv, gcfg)
+						: `**${fieldName}** wird jetzt **ausgeblendet**`);
+
+				// UPDATE mit neuem Menü!
+				await this.handleEmbedFields(interaction, idx, gcfg);
+
+				// Zusätzliche Bestätigung als Ephemeral
+				await interaction.followUp({
+					embeds: [new EmbedBuilder()
+						.setColor(nowVisible ? '#00FF00' : '#FFA500')
+						.setTitle(title)
+						.setDescription(description)],
+					ephemeral: true
+				});
+
+				this.logger.success(`Field "${value}" ${nowVisible ? 'enabled' : 'disabled'} for "${srv.serverName}" by ${interaction.user.tag}`);
+				return;
+			}
 		}
+		
+		// ═══════════════════════════════════════════════════════════
+		// PASSWORD SETTINGS TOGGLE HANDLER
+		// FÜGE IN handleSelectMenu EIN (nach Field Toggle Handler):
+		// ═══════════════════════════════════════════════════════════
+
+				if (interaction.customId.startsWith('setup_password_settings_')) {
+					const idx = parseInt(interaction.customId.split('_')[3]);
+					const value = interaction.values[0];
+					const srv = gcfg.servers[idx];
+					if (!srv.embedSettings) srv.embedSettings = {};
+					const s = srv.embedSettings;
+
+					if (value === 'back') {
+						const srv = gcfg.servers[idx];
+						
+						const title = this.messageHandler
+							? this.messageHandler.get('setup.embedDesign.designOptions.title', { serverName: srv.serverName }, srv, gcfg)
+							: `🎨 ${srv.serverName} - Design`;
+						
+						const description = this.messageHandler
+							? this.messageHandler.get('setup.embedDesign.designOptions.description', {}, srv, gcfg)
+							: 'Was möchtest du ändern?';
+
+						await interaction.update({
+							embeds: [new EmbedBuilder()
+								.setColor('#FF69B4')
+								.setTitle(title)
+								.setDescription(description)],
+							components: [this.setupMenus.createEmbedOptionsMenu(idx, gcfg)]
+						});
+						return;
+					}
+
+					if (value === 'toggle_field') {
+						s.showPasswordField = !(s.showPasswordField !== false);
+					} else if (value === 'toggle_nopassword') {
+						// Toggle hasNoPassword - NEU!
+						s.hasNoPassword = !s.hasNoPassword;
+					} else if (value === 'toggle_reveal') {
+						s.revealPasswordText = !s.revealPasswordText;
+					}
+
+					this.configManager.saveGuild(interaction.guildId, gcfg);
+					this.monitoringManager.startMonitoring(interaction.guildId);
+
+					// Refresh menu with feedback
+					let action;
+					if (value === 'toggle_field') {
+						action = s.showPasswordField ? 'Field shown' : 'Field hidden';
+					} else if (value === 'toggle_nopassword') {
+						action = s.hasNoPassword ? 'Server marked as "no password"' : 'Server no longer marked as "no password"';
+					} else {
+						action = s.revealPasswordText ? 'Password reveals as spoiler' : 'Password shows as Protected';
+					}
+					
+					await this.handlePasswordSettings(interaction, idx, gcfg, action);
+					return;
+				}
 
         // ═══════════════════════════════════════════════════════════
         // PERMISSION ROLE TOGGLE
@@ -593,6 +1084,63 @@ class InteractionHandler {
             await this.handleServerDelete(interaction, gcfg);
             return;
         }
+		
+		// Server Edit Options
+        if (interaction.customId.startsWith('setup_server_edit_')) {
+            const idx = parseInt(interaction.customId.split('_')[3]);
+            const value = interaction.values[0];
+
+            if (value === 'back') {
+                // Back to server management
+                await interaction.update({
+                    embeds: [this.setupMenus.createServerManagementEmbed(gcfg)],
+                    components: [this.setupMenus.createServerMenu(gcfg)]
+                });
+                return;
+            }
+
+            if (value === 'basis_info') {
+                await this.handleBasisInfoModal(interaction, idx, gcfg);
+                return;
+            }
+
+            if (value === 'weitere_links') {
+                await this.handleWeitereLinksModal(interaction, idx, gcfg);
+                return;
+            }
+			
+			if (value === 'server_password') {
+                await this.handleServerPasswordModal(interaction, idx, gcfg);
+                return;
+            }
+
+            if (value === 'farm_names') {
+                await this.handleFarmNamesMenu(interaction, idx, gcfg);
+                return;
+            }
+        }
+
+        // Farm Names Select
+        if (interaction.customId.startsWith('setup_farm_rename_')) {
+            const idx = parseInt(interaction.customId.split('_')[3]);
+            const value = interaction.values[0];
+
+            if (value === 'back') {
+                await this.handleServerEditMenu(interaction, idx, gcfg);
+                return;
+            }
+
+            const farmId = value;
+            await this.handleFarmRenameModal(interaction, idx, farmId, gcfg);
+            return;
+        }
+
+        // Farm Names Back (when no farms)
+        if (interaction.customId.startsWith('setup_farm_names_back_')) {
+            const idx = parseInt(interaction.customId.split('_')[4]);
+            await this.handleServerEditMenu(interaction, idx, gcfg);
+            return;
+        }
 
         // Channel Selection
         if (interaction.customId === 'select_channel') {
@@ -622,7 +1170,8 @@ class InteractionHandler {
 				? this.messageHandler.get('setup.serverManagement.toggle.separatorSelected.description', {}, null, gcfg)
 				: 'Das ist nur ein optischer Trenner.\n\nBitte wähle einen Server oder eine der Aktionen darüber.';
 
-			await interaction.reply({
+			await interaction.deferUpdate();
+			await interaction.followUp({
 				embeds: [new EmbedBuilder()
 					.setColor('#3498DB')
 					.setTitle(title)
@@ -869,8 +1418,17 @@ class InteractionHandler {
                 await this.handleEmbedFields(interaction, idx, gcfg);
             } else if (value === 'colors') {
                 await this.handleEmbedColors(interaction, idx, gcfg);
+            } else if (value === 'password') {
+                await this.handlePasswordSettings(interaction, idx, gcfg);
+            } else if (value === 'field_rotation') {
+                const srv = gcfg.servers[idx];
+                
+                const embed = this.setupMenus.createFieldRotationMenu(srv, gcfg);
+                const row = this.setupMenus.createFieldRotationSelect(idx, srv, gcfg);
+                
+                await interaction.update({ embeds: [embed], components: [row] });
+                return;
             }
-            return;
         }
 
         // ═══════════════════════════════════════════════════════════
@@ -908,10 +1466,86 @@ class InteractionHandler {
             return;
         }
 
+		// ═══════════════════════════════════════════════════════════
+		// FIELD ROTATION TOGGLE
+		// ═══════════════════════════════════════════════════════════
+
+		if (interaction.customId.startsWith('setup_field_rotation_toggle_')) {
+			const idx = parseInt(interaction.customId.split('_').pop());
+			const selectedValue = interaction.values[0];
+			const gcfg = this.configManager.loadGuild(interaction.guildId);
+			const srv = gcfg.servers[idx];
+			
+			if (selectedValue === 'back') {
+				// Zurück zum Embed Options Menu
+				const embed = new EmbedBuilder()
+					.setColor('#FF69B4')
+					.setTitle(this.messageHandler.get('setup.embedDesign.designOptions.title', { serverName: srv.serverName }, srv, gcfg))
+					.setDescription(this.messageHandler.get('setup.embedDesign.designOptions.description', {}, srv, gcfg));
+				
+				const row = this.setupMenus.createEmbedOptionsMenu(idx, gcfg);
+				
+				await interaction.update({ embeds: [embed], components: [row] });
+				return;
+			}
+			
+			if (selectedValue === 'toggle') {
+				// Toggle Field Rotation
+				if (!srv.embedSettings) srv.embedSettings = {};
+				
+				const wasEnabled = srv.embedSettings.enableFieldRotation === true;
+				srv.embedSettings.enableFieldRotation = !wasEnabled;
+				
+				// Reset rotation index when toggling
+				if (srv.embedSettings.enableFieldRotation) {
+					srv.embedSettings.currentFieldRotationIndex = 0;
+				}
+				
+				// Save config
+                this.configManager.saveGuild(interaction.guildId, gcfg);
+                this.logger.info(`[SETUP] Reloading config and restarting monitoring for ${srv.serverName}`, 'setup');
+                this.monitoringManager.stopMonitoring(interaction.guildId);
+                this.monitoringManager.startMonitoring(interaction.guildId);
+                
+                // Log the change
+                this.logger.info(
+                    `[SETUP] Field Rotation ${srv.embedSettings.enableFieldRotation ? 'ENABLED' : 'DISABLED'} for ${srv.serverName}`,
+                    'setup'
+                );
+				
+				// Aktualisiere das Menu mit neuem Status
+				const embed = this.setupMenus.createFieldRotationMenu(srv, gcfg);
+				const row = this.setupMenus.createFieldRotationSelect(idx, srv, gcfg);
+				
+				// Zeige Bestätigungsnachricht
+				const confirmationEmbed = new EmbedBuilder()
+					.setColor(srv.embedSettings.enableFieldRotation ? '#00FF00' : '#FF0000')
+					.setTitle('✅ Field Rotation Updated')
+					.setDescription(
+						`Field Rotation has been **${srv.embedSettings.enableFieldRotation ? 'ENABLED' : 'DISABLED'}** for **${srv.serverName}**\n\n` +
+						(srv.embedSettings.enableFieldRotation 
+							? `🔄 Your embed will now rotate through all fields, showing 25 at a time.`
+							: `⚠️ **Warning:** If you have more than 25 fields enabled, only the first 25 will be displayed.\n\nTo see all fields, either:\n• Re-enable Field Rotation\n• Disable some fields in the Hide/View Fields menu`)
+					)
+					.setFooter({ text: 'Returning to menu in 3 seconds...' });
+				
+				await interaction.update({ embeds: [confirmationEmbed], components: [] });
+				
+				// Warte 3 Sekunden, dann zeige das Menu wieder
+				setTimeout(async () => {
+					try {
+						await interaction.editReply({ embeds: [embed], components: [row] });
+					} catch (e) {
+						this.logger.error(`Failed to update Field Rotation menu: ${e.message}`, 'setup');
+					}
+				}, 3000);
+				
+				return;
+			}
+		}
+		
         // ═══════════════════════════════════════════════════════════
 		//  BUTTON TOGGLE HANDLER - NUR PLAYERS BUTTON OPTION
-		//  SUCHE in InteractionHandler.js nach: setup_button_toggle_
-		//  ERSETZE den kompletten if-Block
 		// ═══════════════════════════════════════════════════════════
 
 		if (interaction.customId.startsWith('setup_button_toggle_')) {
@@ -1061,50 +1695,48 @@ class InteractionHandler {
 		}
 
 		if (action === 'add') {
-			// ⭐ HARDCODED - NO MessageHandler!
-			const modal = new ModalBuilder()
-				.setCustomId('modal_add_server')
-				.setTitle('➕ Add FS Server');
+            const modal = new ModalBuilder()
+                .setCustomId('modal_add_server')
+                .setTitle('➕ FS Server hinzufügen');
 
-			// ⭐ SHORTENED PLACEHOLDERS (max 100 chars!)
-			modal.addComponents(
-				new ActionRowBuilder().addComponents(
-					new TextInputBuilder()
-						.setCustomId('server_name')
-						.setLabel('Server Name')
-						.setPlaceholder('My FS25 Server')
-						.setStyle(TextInputStyle.Short)
-						.setRequired(true)
-				),
-				new ActionRowBuilder().addComponents(
-					new TextInputBuilder()
-						.setCustomId('stats_url')
-						.setLabel('Stats URL (required)')
-						.setPlaceholder('http://ip:8080/feed/dedicated-server-stats.xml')
-						.setStyle(TextInputStyle.Short)
-						.setRequired(true)
-				),
-				new ActionRowBuilder().addComponents(
-					new TextInputBuilder()
-						.setCustomId('career_savegame_url')
-						.setLabel('Career URL (optional)')
-						.setPlaceholder('http://ip:8080/feed/...-savegame.html?...')
-						.setStyle(TextInputStyle.Short)
-						.setRequired(false)
-				),
-				new ActionRowBuilder().addComponents(
-					new TextInputBuilder()
-						.setCustomId('mod_list_url')
-						.setLabel('Mod List URL (optional)')
-						.setPlaceholder('http://ip:8080/mods.html')
-						.setStyle(TextInputStyle.Short)
-						.setRequired(false)
-				)
-			);
+            modal.addComponents(
+                new ActionRowBuilder().addComponents(
+                    new TextInputBuilder()
+                        .setCustomId('server_name')
+                        .setLabel('Server Name (Pflicht)')
+                        .setPlaceholder('Mein FS25 Server')
+                        .setStyle(TextInputStyle.Short)
+                        .setRequired(true)
+                ),
+                new ActionRowBuilder().addComponents(
+                    new TextInputBuilder()
+                        .setCustomId('stats_url')
+                        .setLabel('Stats XML URL (Pflicht)')
+                        .setPlaceholder('http://ip:8080/feed/dedicated-server-stats.xml')
+                        .setStyle(TextInputStyle.Short)
+                        .setRequired(true)
+                ),
+                new ActionRowBuilder().addComponents(
+                    new TextInputBuilder()
+                        .setCustomId('career_url')
+                        .setLabel('Career Savegame URL (Optional)')
+                        .setPlaceholder('http://ip:8080/feed/careerSavegame.html?code=...')
+                        .setStyle(TextInputStyle.Short)
+                        .setRequired(false)
+                ),
+                new ActionRowBuilder().addComponents(
+                    new TextInputBuilder()
+                        .setCustomId('info_hint')
+                        .setLabel('ℹ️ Weitere URLs hinzufügen')
+                        .setValue('Nach dem Hinzufügen: /setup → Server bearbeiten → Weitere Links')
+                        .setStyle(TextInputStyle.Paragraph)
+                        .setRequired(false)
+                )
+            );
 
-			await interaction.showModal(modal);
-			return;
-		}
+            await interaction.showModal(modal);
+            return;
+        }
 
 		if (action === 'edit') {
 			if (gcfg.servers.length === 0) {
@@ -1178,56 +1810,20 @@ class InteractionHandler {
 	}
 
     async handleServerEdit(interaction, gcfg) {
-		const idx = parseInt(interaction.values[0]);
-		const srv = gcfg.servers[idx];
-
-		// ⭐ TRUNCATE everything to prevent "Invalid string length"
-		const serverName = (srv.serverName || '').substring(0, 40);
-		const statsUrl = (srv.stats_url || '').substring(0, 2000);
-		const careerUrl = (srv.career_savegame_url || '').substring(0, 2000);
-		const modUrl = (srv.mod_list_url || '').substring(0, 2000);
-
-		const modal = new ModalBuilder()
-			.setCustomId(`modal_edit_server_${idx}`)
-			.setTitle(`✏️ ${serverName}`);
-
-		modal.addComponents(
-			new ActionRowBuilder().addComponents(
-				new TextInputBuilder()
-					.setCustomId('server_name')
-					.setLabel('Server Name')
-					.setValue(serverName)
-					.setStyle(TextInputStyle.Short)
-					.setRequired(true)
-			),
-			new ActionRowBuilder().addComponents(
-				new TextInputBuilder()
-					.setCustomId('stats_url')
-					.setLabel('Stats URL')
-					.setValue(statsUrl)
-					.setStyle(TextInputStyle.Short)
-					.setRequired(true)
-			),
-			new ActionRowBuilder().addComponents(
-				new TextInputBuilder()
-					.setCustomId('career_savegame_url')
-					.setLabel('Career URL')
-					.setValue(careerUrl)
-					.setStyle(TextInputStyle.Short)
-					.setRequired(false)
-			),
-			new ActionRowBuilder().addComponents(
-				new TextInputBuilder()
-					.setCustomId('mod_list_url')
-					.setLabel('Mod List URL')
-					.setValue(modUrl)
-					.setStyle(TextInputStyle.Short)
-					.setRequired(false)
-			)
-		);
-
-		await interaction.showModal(modal);
-	}
+        const idx = parseInt(interaction.values[0]);
+        const srv = gcfg.servers[idx];
+        
+        // Zeige Untermenü mit 3 Optionen
+        await interaction.update({
+            embeds: [new EmbedBuilder()
+                .setColor('#FFA500')
+                .setTitle(`✏️ ${srv.serverName}`)
+                .setDescription(this.messageHandler 
+                    ? this.messageHandler.get('setup.serverEdit.description', {}, srv, gcfg)
+                    : 'Was möchtest du bearbeiten?')],
+            components: [this.setupMenus.createServerEditOptionsMenu(idx, srv, gcfg)]
+        });
+    }
 
 	async handleEditServerModal(interaction, gcfg) {
 		const idx = parseInt(interaction.customId.split('_')[3]);
@@ -1235,7 +1831,7 @@ class InteractionHandler {
 
 		srv.serverName = interaction.fields.getTextInputValue('server_name');
 		srv.stats_url = interaction.fields.getTextInputValue('stats_url');
-		srv.career_savegame_url = interaction.fields.getTextInputValue('career_savegame_url') || '';
+		srv.career_savegame_url = interaction.fields.getTextInputValue('career_url') || '';
 		srv.mod_list_url = interaction.fields.getTextInputValue('mod_list_url') || '';
 
 		this.configManager.saveGuild(interaction.guildId, gcfg);
@@ -1378,7 +1974,30 @@ class InteractionHandler {
 			channelID: channelId,
 			updateInterval: this.configManager.globalConfig.defaults.updateInterval,
 			monitoringEnabled: true,
-			embedSettings: {},
+			embedSettings: {
+				// Core Fields (DEFAULT: shown)
+				showMap: true,
+				showVersion: true,
+				showPassword: true,
+				showPlayers: true,
+				showPlayerList: true,
+				
+				// Mod/Vehicle Fields
+				showMods: true,
+				showModList: false,
+				showVehicles: true,
+				
+				// Career Fields
+				showMoney: true,
+				showDifficulty: true,
+				showTimeScale: true,
+				showCurrentDate: false,
+				showCreationDate: false,
+				showInitialLoan: false,
+				
+				// Economy Fields
+				showGreatDemands: true
+			},
 			buttonSettings: { enabled: true }
 		};
 
@@ -1414,6 +2033,27 @@ class InteractionHandler {
             await this.handleAddServerModal(interaction, gcfg);
             return;
         }
+		
+		// Basis Info Modal
+        if (interaction.customId.startsWith('modal_basis_info_')) {
+            const idx = parseInt(interaction.customId.split('_')[3]);
+            await this.handleBasisInfoSubmit(interaction, idx, gcfg);
+            return;
+        }
+
+        // Weitere Links Modal
+        if (interaction.customId.startsWith('modal_weitere_links_')) {
+            const idx = parseInt(interaction.customId.split('_')[3]);
+            await this.handleWeitereLinksSubmit(interaction, idx, gcfg);
+            return;
+        }
+		
+		// Server Password Modal
+        if (interaction.customId.startsWith('modal_server_password_')) {
+            const idx = parseInt(interaction.customId.split('_')[3]);
+            await this.handleServerPasswordSubmit(interaction, idx, gcfg);
+            return;
+        }
 
         if (interaction.customId.startsWith('modal_edit_server_')) {
             await this.handleEditServerModal(interaction, gcfg);
@@ -1428,12 +2068,55 @@ class InteractionHandler {
             const idx = parseInt(interaction.customId.split('_')[2]);
             const srv = gcfg.servers[idx];
 
-            const onlineColor = interaction.fields.getTextInputValue('color_online') || '#00FF00';
-            const offlineColor = interaction.fields.getTextInputValue('color_offline') || '#FF0000';
+            const onlineColorInput = interaction.fields.getTextInputValue('color_online') || '#00FF00';
+            const offlineColorInput = interaction.fields.getTextInputValue('color_offline') || '#FF0000';
 
+            // ⭐ VALIDATE COLORS
+            const onlineValidation = this.validateHexColor(onlineColorInput);
+            const offlineValidation = this.validateHexColor(offlineColorInput);
+
+            // ⭐ CHECK IF INVALID
+            if (!onlineValidation.valid || !offlineValidation.valid) {
+                const errors = [];
+                if (!onlineValidation.valid) {
+                    errors.push(`**Online Color:**\n${onlineValidation.error}`);
+                }
+                if (!offlineValidation.valid) {
+                    errors.push(`**Offline Color:**\n${offlineValidation.error}`);
+                }
+
+                const title = this.messageHandler
+                    ? this.messageHandler.get('errors.invalidHexColor.title', {}, srv, gcfg)
+                    : '❌ Invalid Hex Color Code';
+                
+                const description = this.messageHandler
+                    ? this.messageHandler.get('errors.invalidHexColor.description', {}, srv, gcfg)
+                    : 'Please use valid hex color codes!';
+
+                await interaction.reply({
+                    embeds: [new EmbedBuilder()
+                        .setColor('#FF0000')
+                        .setTitle(title)
+                        .setDescription(description)
+                        .addFields({
+                            name: '❌ Errors',
+                            value: errors.join('\n\n'),
+                            inline: false
+                        })
+                        .addFields({
+                            name: '✅ Valid Examples',
+                            value: '`#00FF00` (Green)\n`#FF0000` (Red)\n`#0000FF` (Blue)',
+                            inline: false
+                        })],
+                    ephemeral: true
+                });
+                return;
+            }
+
+            // ⭐ COLORS ARE VALID - SAVE
             if (!srv.embedSettings) srv.embedSettings = {};
-            srv.embedSettings.colorOnline = onlineColor;
-            srv.embedSettings.colorOffline = offlineColor;
+            srv.embedSettings.colorOnline = onlineValidation.color;
+            srv.embedSettings.colorOffline = offlineValidation.color;
 
             this.configManager.saveGuild(interaction.guildId, gcfg);
             this.monitoringManager.startMonitoring(interaction.guildId);
@@ -1452,12 +2135,12 @@ class InteractionHandler {
 
             await interaction.reply({
                 embeds: [new EmbedBuilder()
-                    .setColor(onlineColor)
+                    .setColor(onlineValidation.color)
                     .setTitle(title)
                     .setDescription(`**${srv.serverName}**`)
                     .addFields(
-                        { name: onlineLabel, value: onlineColor, inline: true },
-                        { name: offlineLabel, value: offlineColor, inline: true }
+                        { name: onlineLabel, value: onlineValidation.color, inline: true },
+                        { name: offlineLabel, value: offlineValidation.color, inline: true }
                     )],
                 ephemeral: true
             });
@@ -1499,12 +2182,55 @@ class InteractionHandler {
         // ═══════════════════════════════════════════════════════════
 
         if (interaction.customId === 'modal_global_colors') {
-            const onlineColor = interaction.fields.getTextInputValue('color_online') || '#00FF00';
-            const offlineColor = interaction.fields.getTextInputValue('color_offline') || '#FF0000';
+            const onlineColorInput = interaction.fields.getTextInputValue('color_online') || '#00FF00';
+            const offlineColorInput = interaction.fields.getTextInputValue('color_offline') || '#FF0000';
 
+            // ⭐ VALIDATE COLORS
+            const onlineValidation = this.validateHexColor(onlineColorInput);
+            const offlineValidation = this.validateHexColor(offlineColorInput);
+
+            // ⭐ CHECK IF INVALID
+            if (!onlineValidation.valid || !offlineValidation.valid) {
+                const errors = [];
+                if (!onlineValidation.valid) {
+                    errors.push(`**Online Color:**\n${onlineValidation.error}`);
+                }
+                if (!offlineValidation.valid) {
+                    errors.push(`**Offline Color:**\n${offlineValidation.error}`);
+                }
+
+                const title = this.messageHandler
+                    ? this.messageHandler.get('errors.invalidHexColor.title', {}, null, gcfg)
+                    : '❌ Invalid Hex Color Code';
+                
+                const description = this.messageHandler
+                    ? this.messageHandler.get('errors.invalidHexColor.description', {}, null, gcfg)
+                    : 'Please use valid hex color codes!';
+
+                await interaction.reply({
+                    embeds: [new EmbedBuilder()
+                        .setColor('#FF0000')
+                        .setTitle(title)
+                        .setDescription(description)
+                        .addFields({
+                            name: '❌ Errors',
+                            value: errors.join('\n\n'),
+                            inline: false
+                        })
+                        .addFields({
+                            name: '✅ Valid Examples',
+                            value: '`#00FF00` (Green)\n`#FF0000` (Red)\n`#0000FF` (Blue)',
+                            inline: false
+                        })],
+                    ephemeral: true
+                });
+                return;
+            }
+
+            // ⭐ COLORS ARE VALID - SAVE
             if (!gcfg.embedColors) gcfg.embedColors = {};
-            gcfg.embedColors.online = onlineColor;
-            gcfg.embedColors.offline = offlineColor;
+            gcfg.embedColors.online = onlineValidation.color;
+            gcfg.embedColors.offline = offlineValidation.color;
 
             this.configManager.saveGuild(interaction.guildId, gcfg);
 
@@ -1526,118 +2252,147 @@ class InteractionHandler {
 
             await interaction.reply({
                 embeds: [new EmbedBuilder()
-                    .setColor(onlineColor)
+                    .setColor(onlineValidation.color)
                     .setTitle(title)
                     .setDescription(description)
                     .addFields(
-                        { name: onlineLabel, value: onlineColor, inline: true },
-                        { name: offlineLabel, value: offlineColor, inline: true }
+                        { name: onlineLabel, value: onlineValidation.color, inline: true },
+                        { name: offlineLabel, value: offlineValidation.color, inline: true }
                     )],
                 ephemeral: true
             });
             return;
         }
+		
+		// Farm Rename Modal
+        if (interaction.customId.startsWith('modal_farm_rename_')) {
+            const parts = interaction.customId.split('_');
+            const idx = parseInt(parts[3]);
+            const farmId = parts[4];
+            
+            await this.handleFarmRenameSubmit(interaction, idx, farmId, gcfg);
+            return;
+        }
+		
+		// Basic Info Modal
+        if (interaction.customId.startsWith('modal_basis_info_')) {
+            const idx = parseInt(interaction.customId.split('_')[3]);
+            await this.handleBasisInfoSubmit(interaction, idx, gcfg);
+            return;
+        }
+
+        // Advanced URLs Modal
+        if (interaction.customId.startsWith('modal_weitere_links_')) {
+            const idx = parseInt(interaction.customId.split('_')[3]);
+            await this.handleWeitereLinksSubmit(interaction, idx, gcfg);
+            return;
+        }
     }
 
     async handleAddServerModal(interaction, gcfg) {
-		const serverName = interaction.fields.getTextInputValue('server_name');
-		const statsUrl = interaction.fields.getTextInputValue('stats_url');
-		const careerSavegameUrl = interaction.fields.getTextInputValue('career_savegame_url') || '';
-		const modListUrl = interaction.fields.getTextInputValue('mod_list_url') || '';
+        const serverName = interaction.fields.getTextInputValue('server_name');
+        const statsUrl = interaction.fields.getTextInputValue('stats_url');
+        const careerUrl = interaction.fields.getTextInputValue('career_url') || '';
+        // info_hint wird ignoriert (nur Anzeige)
 
-		// Save to temp data
-		this.client.tempServerData.set(interaction.user.id, {
-			serverName,
-			stats_url: statsUrl,
-			career_savegame_url: careerSavegameUrl,
-			mod_list_url: modListUrl
-		});
+        // Save to temp data - NUR Basis-URLs
+        this.client.tempServerData.set(interaction.user.id, {
+            serverName,
+            stats_url: statsUrl,
+            career_url: careerUrl,
+            career_savegame_url: careerUrl, // Backward compatibility
+            vehicles_url: '',
+            economy_url: '',
+            mod_list_url: '',
+            map_screenshot_url: ''
+        });
 
-		const { PermissionManager } = require('./PermissionManager');
-		
-		// Channels with permissions check
-		const channels = await Promise.all(
-			interaction.guild.channels.cache
-				.filter(c => c.type === ChannelType.GuildText)
-				.map(async c => {
-					const permCheck = await PermissionManager.checkChannelPerms(c);
-					return {
-						channel: c,
-						hasPerms: permCheck.hasAll
-					};
-				})
-		);
+        const { PermissionManager } = require('./PermissionManager');
+        
+        // Channels with permissions check
+        const channels = await Promise.all(
+            interaction.guild.channels.cache
+                .filter(c => c.type === ChannelType.GuildText)
+                .map(async c => {
+                    const permCheck = await PermissionManager.checkChannelPerms(c);
+                    return {
+                        channel: c,
+                        hasPerms: permCheck.hasAll
+                    };
+                })
+        );
 
-		if (channels.length === 0) {
-			const errorMsg = this.messageHandler
-				? this.messageHandler.get('setup.serverManagement.add.noChannels', {}, null, gcfg)
-				: '❌ No text channels found!';
+        if (channels.length === 0) {
+            return interaction.reply({
+                content: '❌ Keine Text-Channels gefunden!',
+                ephemeral: true
+            });
+        }
 
-			return interaction.reply({
-				content: errorMsg,
-				ephemeral: true
-			});
-		}
+        // Sort: Channels with perms first
+        channels.sort((a, b) => {
+            if (a.hasPerms && !b.hasPerms) return -1;
+            if (!a.hasPerms && b.hasPerms) return 1;
+            return 0;
+        });
 
-		// Sort: Channels with perms first
-		channels.sort((a, b) => {
-			if (a.hasPerms && !b.hasPerms) return -1;
-			if (!a.hasPerms && b.hasPerms) return 1;
-			return 0;
-		});
+        const options = channels.slice(0, 25).map(({ channel: c, hasPerms }) => ({
+            label: `${hasPerms ? '✅' : '⚠️'} #${c.name}`,
+            description: hasPerms 
+                ? (c.topic ? c.topic.substring(0, 80) : 'Alle Berechtigungen vorhanden')
+                : 'Bot hat fehlende Berechtigungen!',
+            value: c.id,
+            emoji: hasPerms ? '💬' : '⚠️'
+        }));
 
-		const options = channels.slice(0, 25).map(({ channel: c, hasPerms }) => ({
-			label: `${hasPerms ? '✅' : '⚠️'} #${c.name}`,
-			description: hasPerms 
-				? (c.topic ? c.topic.substring(0, 80) : 'All permissions available')
-				: 'Bot has missing permissions!',
-			value: c.id,
-			emoji: hasPerms ? '💬' : '⚠️'
-		}));
+        const select = new ActionRowBuilder()
+            .addComponents(
+                new StringSelectMenuBuilder()
+                    .setCustomId('select_channel')
+                    .setPlaceholder('📺 Channel für Status-Updates wählen...')
+                    .addOptions(options)
+            );
 
-		const select = new ActionRowBuilder()
-			.addComponents(
-				new StringSelectMenuBuilder()
-					.setCustomId('select_channel')
-					.setPlaceholder('📺 Choose channel for status updates...')
-					.addOptions(options)
-			);
+        const warningChannels = channels.filter(c => !c.hasPerms);
+        
+        let description = `Server **${serverName}** wird hinzugefügt.\n\nWähle den Channel für Status-Updates:`;
+        
+        if (warningChannels.length > 0) {
+            description += `\n\n⚠️ **Warnung:** ${warningChannels.length} Channel(s) haben fehlende Berechtigungen!`;
+        }
 
-		const warningChannels = channels.filter(c => !c.hasPerms);
-		
-		const title = '📺 Select Channel';
-		
-		let description = `Server **${serverName}** will be added.\n\nChoose the channel where status updates should appear:`;
-		
-		if (warningChannels.length > 0) {
-			description += `\n\n⚠️ **Warning:** ${warningChannels.length} channel(s) have missing permissions!`;
-		}
+        description += `\n\n💡 **Tipp:** Weitere URLs (Vehicles, Economy, etc.) kannst du nach dem Hinzufügen über \`/setup → Server bearbeiten → Weitere Links\` eintragen!`;
 
 		await interaction.reply({
-			embeds: [new EmbedBuilder()
-				.setColor(warningChannels.length > 0 ? '#FFA500' : '#00FF00')
-				.setTitle(title)
-				.setDescription(description)
-				.addFields(
-					{ name: '🔗 Stats URL', value: `\`${statsUrl.substring(0, 100)}\``, inline: false },
-					{ 
-						name: '📋 Required Permissions', 
-						value: '👁️ View Channel\n💬 Send Messages\n🔗 Embed Links\n📁 Attach Files\n📜 Read Message History', 
-						inline: true 
-					}
-				)],
-			components: [select],
-			ephemeral: true
-		});
-	}
-
+            embeds: [
+                new EmbedBuilder()
+                    .setColor(warningChannels.length > 0 ? '#FFA500' : '#00FF00')
+                    .setTitle('📺 Channel auswählen')
+                    .setDescription(description)
+                    .addFields(
+                        [
+                            { name: '✅ Stats XML', value: `\`${statsUrl.substring(0, 80)}...\``, inline: false },
+                            careerUrl ? { name: '✅ Career Savegame', value: `\`${careerUrl.substring(0, 80)}...\``, inline: false } : null,
+                            { 
+                                name: '📋 Benötigte Berechtigungen', 
+                                value: '👁️ Kanal ansehen\n💬 Nachrichten senden\n🔗 Embeds verwenden\n📁 Dateien anhängen\n📜 Nachrichtenverlauf', 
+                                inline: true 
+                            }
+                        ].filter(f => f !== null)
+                    )
+            ],
+            components: [select],
+            ephemeral: true
+        });
+    }
+	
 	async handleEditServerModal(interaction, gcfg) {
 		const idx = parseInt(interaction.customId.split('_')[3]);
 		const srv = gcfg.servers[idx];
 
 		srv.serverName = interaction.fields.getTextInputValue('server_name');
 		srv.stats_url = interaction.fields.getTextInputValue('stats_url');
-		srv.career_savegame_url = interaction.fields.getTextInputValue('career_savegame_url') || '';
+		srv.career_savegame_url = interaction.fields.getTextInputValue('career_url') || '';
 		srv.mod_list_url = interaction.fields.getTextInputValue('mod_list_url') || '';
 
 		this.configManager.saveGuild(interaction.guildId, gcfg);
@@ -1685,7 +2440,7 @@ class InteractionHandler {
 		if (action === 'players') {
 			try {
 				const { StatusChecker } = require('./StatusChecker');
-				const data = await StatusChecker.getStatus(srv);
+				const data = await StatusChecker.getStatus(srv, null, this.logger);
 				
 				if (!data.online) {
 					const offlineMsg = this.messageHandler
@@ -1917,6 +2672,580 @@ class InteractionHandler {
         });
 
         this.logger.success(`Server language for "${srv.serverName}" changed to ${languageCode} by ${interaction.user.tag}`);
+    }
+	
+	// ═══════════════════════════════════════════════════════════
+    // VEHICLE MENU HANDLERS
+    // ═══════════════════════════════════════════════════════════
+
+    async handleVehicleMainMenu(interaction, gcfg) {
+        const userId = interaction.user.id;
+        const vehicleDataStore = this.client.vehicleData.get(userId);
+
+        if (!vehicleDataStore) {
+            await interaction.reply({
+                content: '❌ Session expired! Please use `/vehicles` again.',
+                ephemeral: true
+            });
+            return;
+        }
+
+        const { vehicles, farmNames } = vehicleDataStore;
+        const action = interaction.values[0];
+
+        let embed, components;
+
+        switch (action) {
+            case 'fleet_stats':
+                embed = this.vehicleMenus.createFleetStats(vehicles, gcfg);
+                components = [this.vehicleMenus.createBackButton('main')];
+                break;
+
+            case 'top5':
+                embed = this.vehicleMenus.createTop5(vehicles, gcfg);
+                components = [this.vehicleMenus.createBackButton('main')];
+                break;
+
+            case 'value_breakdown':
+                embed = this.vehicleMenus.createValueBreakdown(vehicles, gcfg);
+                components = [this.vehicleMenus.createBackButton('main')];
+                break;
+
+            case 'farm_overview':
+                embed = this.vehicleMenus.createFarmOverview(vehicles, farmNames, gcfg);
+                components = [this.vehicleMenus.createFarmSelect(vehicles, farmNames, gcfg)];
+                break;
+
+            default:
+                await interaction.reply({
+                    content: '❌ Unknown option!',
+                    ephemeral: true
+                });
+                return;
+        }
+
+        await interaction.update({
+            embeds: [embed],
+            components: components
+        });
+    }
+
+    async handleVehicleFarmSelect(interaction, gcfg) {
+        const userId = interaction.user.id;
+        const vehicleDataStore = this.client.vehicleData.get(userId);
+
+        if (!vehicleDataStore) {
+            await interaction.reply({
+                content: '❌ Session expired! Please use `/vehicles` again.',
+                ephemeral: true
+            });
+            return;
+        }
+
+        const { vehicles, farmNames } = vehicleDataStore;
+        const farmId = interaction.values[0];
+
+        if (farmId === 'back') {
+            const embed = this.vehicleMenus.createMainMenu(vehicles, gcfg);
+            const select = this.vehicleMenus.createMainMenuSelect(gcfg);
+
+            await interaction.update({
+                embeds: [embed],
+                components: [select]
+            });
+            return;
+        }
+
+        const embed = this.vehicleMenus.createFarmDetails(farmId, vehicles, farmNames, gcfg);
+        const backRow = this.vehicleMenus.createBackButton('main');
+
+        await interaction.update({
+            embeds: [embed],
+            components: [backRow]
+        });
+    }
+
+    async handleVehicleBack(interaction, gcfg) {
+        const userId = interaction.user.id;
+        const vehicleDataStore = this.client.vehicleData.get(userId);
+
+        if (!vehicleDataStore) {
+            await interaction.reply({
+                content: '❌ Session expired! Please use `/vehicles` again.',
+                ephemeral: true
+            });
+            return;
+        }
+
+        const { vehicles } = vehicleDataStore;
+
+        const embed = this.vehicleMenus.createMainMenu(vehicles, gcfg);
+        const select = this.vehicleMenus.createMainMenuSelect(gcfg);
+
+        await interaction.update({
+            embeds: [embed],
+            components: [select]
+        });
+    }
+	
+	// ═══════════════════════════════════════════════════════════
+    // FARM NAMES MANAGEMENT
+    // ═══════════════════════════════════════════════════════════
+
+    /**
+     * Handle Server Edit Menu
+     */
+    async handleServerEditMenu(interaction, idx, gcfg) {
+        const srv = gcfg.servers[idx];
+
+        await interaction.update({
+            embeds: [new EmbedBuilder()
+                .setColor('#FFA500')
+                .setTitle(`✏️ ${srv.serverName}`)
+                .setDescription(this.messageHandler 
+                    ? this.messageHandler.get('setup.serverEdit.description', {}, srv, gcfg)
+                    : 'Was möchtest du bearbeiten?')],
+            components: [this.setupMenus.createServerEditOptionsMenu(idx, srv, gcfg)]
+        });
+    }
+
+    /**
+     * Handle Farm Names Menu
+     */
+    async handleFarmNamesMenu(interaction, idx, gcfg) {
+        const srv = gcfg.servers[idx];
+
+        await interaction.update({
+            embeds: [this.setupMenus.createFarmNamesMenu(idx, srv, gcfg)],
+            components: [this.setupMenus.createFarmNamesSelect(idx, srv, gcfg)]
+        });
+    }
+
+    /**
+     * Handle Farm Rename Modal
+     */
+    async handleFarmRenameModal(interaction, idx, farmId, gcfg) {
+        const srv = gcfg.servers[idx];
+        const currentName = srv.farmNames?.[farmId] || `Farm ${farmId}`;
+
+        const modal = new ModalBuilder()
+            .setCustomId(`modal_farm_rename_${idx}_${farmId}`)
+            .setTitle(this.messageHandler
+                ? this.messageHandler.get('setup.farmNames.modal.title', { farmId }, srv, gcfg)
+                : `🏠 Farm ${farmId} umbenennen`);
+
+        modal.addComponents(
+            new ActionRowBuilder().addComponents(
+                new TextInputBuilder()
+                    .setCustomId('farm_name')
+                    .setLabel(this.messageHandler
+                        ? this.messageHandler.get('setup.farmNames.modal.label', {}, srv, gcfg)
+                        : 'Farm-Name')
+                    .setPlaceholder(this.messageHandler
+                        ? this.messageHandler.get('setup.farmNames.modal.placeholder', {}, srv, gcfg)
+                        : 'z.B. Haupthof, Bergfarm, ...')
+                    .setValue(currentName)
+                    .setStyle(TextInputStyle.Short)
+                    .setRequired(true)
+                    .setMaxLength(50)
+            )
+        );
+
+        await interaction.showModal(modal);
+    }
+
+    /**
+     * Handle Farm Rename Submit
+     */
+    async handleFarmRenameSubmit(interaction, idx, farmId, gcfg) {
+        const srv = gcfg.servers[idx];
+        const newName = interaction.fields.getTextInputValue('farm_name');
+
+        // Initialize farmNames if not exists
+        if (!srv.farmNames) {
+            srv.farmNames = {};
+        }
+
+        // Set new name
+        srv.farmNames[farmId] = newName;
+
+        // Save config
+        this.configManager.saveGuild(interaction.guildId, gcfg);
+
+        this.logger.success(`Farm ${farmId} renamed to "${newName}" on ${srv.serverName} by ${interaction.user.tag}`);
+
+        const title = this.messageHandler
+            ? this.messageHandler.get('setup.farmNames.success.title', {}, srv, gcfg)
+            : '✅ Farm umbenannt';
+
+        const description = this.messageHandler
+            ? this.messageHandler.get('setup.farmNames.success.description', { 
+                farmId, 
+                farmName: newName 
+              }, srv, gcfg)
+            : `**Farm ${farmId}** heißt jetzt:\n🏠 **${newName}**`;
+
+        await interaction.reply({
+            embeds: [new EmbedBuilder()
+                .setColor('#00FF00')
+                .setTitle(title)
+                .setDescription(description)],
+            ephemeral: true
+        });
+    }
+	
+	// ═══════════════════════════════════════════════════════════
+    // URL MANAGEMENT
+    // ═══════════════════════════════════════════════════════════
+
+    /**
+     * Show Basic Info Modal
+     */
+    async handleBasisInfoModal(interaction, idx, gcfg) {
+        const srv = gcfg.servers[idx];
+        
+        const serverName = (srv.serverName || '').substring(0, 45);
+        const statsUrl = (srv.stats_url || '').substring(0, 2000);
+        const careerUrl = (srv.career_url || srv.career_savegame_url || '').substring(0, 2000);
+
+        const modal = new ModalBuilder()
+            .setCustomId(`modal_basis_info_${idx}`)
+            .setTitle(`📝 ${serverName} - Basic Info`);
+
+        modal.addComponents(
+            new ActionRowBuilder().addComponents(
+                new TextInputBuilder()
+                    .setCustomId('server_name')
+                    .setLabel('Server Name')
+                    .setPlaceholder('Mein FS25 Server')
+                    .setValue(serverName)
+                    .setStyle(TextInputStyle.Short)
+                    .setRequired(true)
+            ),
+            new ActionRowBuilder().addComponents(
+                new TextInputBuilder()
+                    .setCustomId('stats_url')
+                    .setLabel('Stats URL (erforderlich)')
+                    .setPlaceholder('http://ip:8080/feed/dedicated-server-stats.xml')
+                    .setValue(statsUrl)
+                    .setStyle(TextInputStyle.Short)
+                    .setRequired(true)
+            ),
+            new ActionRowBuilder().addComponents(
+                new TextInputBuilder()
+                    .setCustomId('career_url')
+                    .setLabel('Career Savegame URL (optional)')
+                    .setPlaceholder('http://ip:8080/feed/...-savegame.html?code=...')
+                    .setValue(careerUrl)
+                    .setStyle(TextInputStyle.Short)
+                    .setRequired(false)
+            )
+        );
+
+        await interaction.showModal(modal);
+    }
+
+    /**
+     * Show Advanced URLs Modal
+     */
+    async handleWeitereLinksModal(interaction, idx, gcfg) {
+        const srv = gcfg.servers[idx];
+        
+        const modListUrl = (srv.mod_list_url || '').substring(0, 2000);
+        const vehiclesUrl = (srv.vehicles_url || '').substring(0, 2000);
+        const economyUrl = (srv.economy_url || '').substring(0, 2000);
+        const mapScreenshotUrl = (srv.map_screenshot_url || '').substring(0, 2000);
+
+        const modal = new ModalBuilder()
+            .setCustomId(`modal_weitere_links_${idx}`)
+            .setTitle(`🔗 ${srv.serverName.substring(0, 30)} - URLs`);
+
+        modal.addComponents(
+            new ActionRowBuilder().addComponents(
+                new TextInputBuilder()
+                    .setCustomId('mod_list_url')
+                    .setLabel('Mod List URL (optional)')
+                    .setPlaceholder('http://ip:8080/mods.html')
+                    .setValue(modListUrl)
+                    .setStyle(TextInputStyle.Short)
+                    .setRequired(false)
+            ),
+            new ActionRowBuilder().addComponents(
+                new TextInputBuilder()
+                    .setCustomId('vehicles_url')
+                    .setLabel('Vehicles XML URL (optional)')
+                    .setPlaceholder('http://ip:8080/feed/vehicles.xml?code=...')
+                    .setValue(vehiclesUrl)
+                    .setStyle(TextInputStyle.Short)
+                    .setRequired(false)
+            ),
+            new ActionRowBuilder().addComponents(
+                new TextInputBuilder()
+                    .setCustomId('economy_url')
+                    .setLabel('Economy XML URL (optional)')
+                    .setPlaceholder('http://ip:8080/feed/economy.xml?code=...')
+                    .setValue(economyUrl)
+                    .setStyle(TextInputStyle.Short)
+                    .setRequired(false)
+            ),
+            new ActionRowBuilder().addComponents(
+                new TextInputBuilder()
+                    .setCustomId('map_screenshot_url')
+                    .setLabel('Map Screenshot URL (optional)')
+                    .setPlaceholder('https://i.imgur.com/xyz.png')
+                    .setValue(mapScreenshotUrl)
+                    .setStyle(TextInputStyle.Short)
+                    .setRequired(false)
+            )
+        );
+
+        await interaction.showModal(modal);
+    }
+	
+	/**
+     * Show Server Password Modal
+     */
+    async handleServerPasswordModal(interaction, idx, gcfg) {
+        const srv = gcfg.servers[idx];
+        
+        const currentPassword = (srv.serverPassword || '').substring(0, 100);
+
+        const modal = new ModalBuilder()
+            .setCustomId(`modal_server_password_${idx}`)
+            .setTitle(`🔐 ${srv.serverName.substring(0, 30)} - Password`);
+
+        modal.addComponents(
+            new ActionRowBuilder().addComponents(
+                new TextInputBuilder()
+                    .setCustomId('server_password')
+                    .setLabel('Server Password')
+                    .setPlaceholder('Enter the server password (leave empty to remove)')
+                    .setValue(currentPassword)
+                    .setStyle(TextInputStyle.Short)
+                    .setRequired(false)
+                    .setMaxLength(100)
+            ),
+            new ActionRowBuilder().addComponents(
+                new TextInputBuilder()
+                    .setCustomId('password_info')
+                    .setLabel('ℹ️ Info')
+                    .setValue('This password will be displayed in the embed when "Show Password" is enabled.')
+                    .setStyle(TextInputStyle.Paragraph)
+                    .setRequired(false)
+            )
+        );
+
+        await interaction.showModal(modal);
+    }
+
+    /**
+     * Handle Basic Info Modal Submit
+     */
+    async handleBasisInfoSubmit(interaction, idx, gcfg) {
+        const srv = gcfg.servers[idx];
+
+        srv.serverName = interaction.fields.getTextInputValue('server_name');
+        srv.stats_url = interaction.fields.getTextInputValue('stats_url');
+        srv.career_url = interaction.fields.getTextInputValue('career_url') || '';
+        
+        // Backward compatibility
+        srv.career_savegame_url = srv.career_url;
+
+        this.configManager.saveGuild(interaction.guildId, gcfg);
+        this.monitoringManager.startMonitoring(interaction.guildId);
+
+        this.logger.success(`Basic info updated for ${srv.serverName} by ${interaction.user.tag}`);
+
+        await interaction.reply({
+            embeds: [new EmbedBuilder()
+                .setColor('#00FF00')
+                .setTitle('✅ Server-Infos aktualisiert')
+                .setDescription(`**${srv.serverName}**`)
+                .addFields(
+                    { name: '🔗 Stats URL', value: `\`${srv.stats_url.substring(0, 80)}...\``, inline: false },
+                    { name: '💼 Career URL', value: srv.career_url ? `\`${srv.career_url.substring(0, 80)}...\`` : '➖ Nicht gesetzt', inline: false }
+                )],
+            ephemeral: true
+        });
+    }
+
+    /**
+     * Handle Advanced URLs Modal Submit
+     */
+    async handleWeitereLinksSubmit(interaction, idx, gcfg) {
+        const srv = gcfg.servers[idx];
+
+        srv.mod_list_url = interaction.fields.getTextInputValue('mod_list_url') || '';
+        srv.vehicles_url = interaction.fields.getTextInputValue('vehicles_url') || '';
+        srv.economy_url = interaction.fields.getTextInputValue('economy_url') || '';
+        srv.map_screenshot_url = interaction.fields.getTextInputValue('map_screenshot_url') || '';
+
+        this.configManager.saveGuild(interaction.guildId, gcfg);
+        this.monitoringManager.startMonitoring(interaction.guildId);
+
+        this.logger.success(`Advanced URLs updated for ${srv.serverName} by ${interaction.user.tag}`);
+
+        const fields = [];
+        if (srv.mod_list_url) fields.push({ name: '🔧 Mod List', value: `\`${srv.mod_list_url.substring(0, 80)}...\``, inline: false });
+        if (srv.vehicles_url) fields.push({ name: '🚜 Vehicles', value: `\`${srv.vehicles_url.substring(0, 80)}...\``, inline: false });
+        if (srv.economy_url) fields.push({ name: '💰 Economy', value: `\`${srv.economy_url.substring(0, 80)}...\``, inline: false });
+        if (srv.map_screenshot_url) fields.push({ name: '🗺️ Map Screenshot', value: `\`${srv.map_screenshot_url.substring(0, 80)}...\``, inline: false });
+
+        if (fields.length === 0) {
+            fields.push({ name: 'ℹ️ Info', value: 'Alle URLs entfernt', inline: false });
+        }
+
+        await interaction.reply({
+            embeds: [new EmbedBuilder()
+                .setColor('#00FF00')
+                .setTitle('✅ Erweiterte URLs aktualisiert')
+                .setDescription(`**${srv.serverName}**`)
+                .addFields(fields)],
+            ephemeral: true
+        });
+    }
+	
+	/**
+     * Handle Server Password Modal Submit
+     */
+    async handleServerPasswordSubmit(interaction, idx, gcfg) {
+        const srv = gcfg.servers[idx];
+
+        const password = interaction.fields.getTextInputValue('server_password') || '';
+        
+        // Save password (or remove if empty)
+        if (password.trim() === '') {
+            delete srv.serverPassword;
+            this.logger.info(`Server password removed for ${srv.serverName} by ${interaction.user.tag}`);
+        } else {
+            srv.serverPassword = password.trim();
+            this.logger.info(`Server password set for ${srv.serverName} by ${interaction.user.tag}`);
+        }
+
+        this.configManager.saveGuild(interaction.guildId, gcfg);
+        this.monitoringManager.startMonitoring(interaction.guildId);
+
+        const hasPassword = srv.serverPassword && srv.serverPassword.length > 0;
+
+        await interaction.reply({
+            embeds: [new EmbedBuilder()
+                .setColor(hasPassword ? '#00FF00' : '#FFA500')
+                .setTitle('🔐 Server Password Updated')
+                .setDescription(`**${srv.serverName}**`)
+                .addFields({
+                    name: 'Password',
+                    value: hasPassword 
+                        ? `\`${srv.serverPassword}\` (${srv.serverPassword.length} characters)` 
+                        : '❌ No password set',
+                    inline: false
+                })
+                .setFooter({ text: 'Password will be shown in embed when "Show Password" is enabled' })
+            ],
+            ephemeral: true
+        });
+    }
+	
+	// ═══════════════════════════════════════════════════════════
+	// PASSWORD SETTINGS MENU
+	// ═══════════════════════════════════════════════════════════
+
+    async handlePasswordSettings(interaction, idx, gcfg, feedback = null) {
+		const srv = gcfg.servers[idx];
+		if (!srv.embedSettings) srv.embedSettings = {};
+		const s = srv.embedSettings;
+
+		const showField = s.showPasswordField !== false;
+		const revealText = s.revealPasswordText === true;
+		const hasNoPassword = s.hasNoPassword === true;  // ← NEU!
+
+		// Feedback-Nachricht wenn vorhanden
+		let description = 'Configure how the password field is displayed:';
+		if (feedback) {
+			description = `✅ **${feedback}**\n\n${description}`;
+		}
+
+		const embed = new EmbedBuilder()
+			.setColor(feedback ? '#00FF00' : '#FF0000')
+			.setTitle(`🔒 ${srv.serverName} - Password Settings`)
+			.setDescription(description)
+            .addFields(
+                {
+                    name: '1️⃣ Show Password Field',
+                    value: showField ? '✅ Visible' : '❌ Hidden',
+                    inline: true
+                },
+                {
+                    name: '2️⃣ Server has no password',  // ← NEU!
+                    value: hasNoPassword ? '✅ Yes (shows "No password required")' : '❌ No',
+                    inline: true
+                },
+                {
+                    name: '\u200b',
+                    value: '\u200b',
+                    inline: false
+                },
+                {
+                    name: '3️⃣ Reveal Password',  // ← War 2️⃣
+                    value: revealText ? '✅ As Spoiler ||text||' : '❌ Only "Protected"',
+                    inline: true
+                },
+                {
+                    name: '\u200b',
+                    value: '\u200b',
+                    inline: true
+                },
+                {
+                    name: '\u200b',
+                    value: '\u200b',
+                    inline: false
+                },
+                {
+                    name: '💡 How it works:',
+                    value: 
+                        '• **No Password Set + Show Password On:** Shows "🔓 No password required"\n' +
+                        '• **Password + Reveal Off:** Shows "🔒 Protected"\n' +
+                        '• **Password + Reveal On:** Shows ||password|| as spoiler\n' +
+                        '• **Nothing configured:** Field is hidden',
+                    inline: false
+                }
+            );
+
+        const select = new ActionRowBuilder()
+            .addComponents(
+                new StringSelectMenuBuilder()
+                    .setCustomId(`setup_password_settings_${idx}`)
+                    .setPlaceholder('🔒 Configure password...')
+                    .addOptions([
+                        {
+                            label: 'Toggle Field Visibility',
+                            description: showField ? 'Currently: Visible' : 'Currently: Hidden',
+                            value: 'toggle_field',
+                            emoji: '1️⃣'
+                        },
+                        {
+                            label: 'Toggle "Server has no password"',  // ← NEU!
+                            description: hasNoPassword ? 'Currently: ON (no password)' : 'Currently: OFF',
+                            value: 'toggle_nopassword',
+                            emoji: '2️⃣'
+                        },
+                        {
+                            label: 'Toggle Password Reveal',  // ← War ohne Nummer
+                            description: revealText ? 'Currently: As Spoiler' : 'Currently: Protected only',
+                            value: 'toggle_reveal',
+                            emoji: '3️⃣'
+                        },
+                        {
+                            label: '← Back',
+                            value: 'back',
+                            emoji: '↩'
+                        }
+                    ])
+            );
+
+        await interaction.update({
+            embeds: [embed],
+            components: [select]
+        });
     }
 }
 
